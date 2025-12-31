@@ -1,4 +1,5 @@
 import 'dotenv/config';
+
 class TEnviroments {
   DATABASE_HOST: string;
   DATABASE_PORT: number;
@@ -8,6 +9,8 @@ class TEnviroments {
   PORT: number;
   MODE: 'DEV' | 'PRD' | 'TST';
   DATABASE_TYPE: 'postgres' | 'mysql';
+  SECRET_KEY: string;
+  SECRET_BYPASS?: string;
 }
 
 enum EEnviroments {
@@ -19,6 +22,8 @@ enum EEnviroments {
   PORT = 'PORT',
   MODE = 'MODE',
   DATABASE_TYPE = 'DATABASE_TYPE',
+  SECRET_KEY = 'SECRET_KEY',
+  SECRET_BYPASS = 'SECRET_BYPASS',
 }
 
 const toNumber: Array<string> = [EEnviroments.DATABASE_PORT, EEnviroments.PORT];
@@ -35,6 +40,7 @@ class Enviroments {
     PORT: 3001,
     MODE: 'DEV',
     DATABASE_TYPE: 'postgres',
+    SECRET_KEY: '',
   };
 
   private checkValueType(env: string, eEnv: string): number | string {

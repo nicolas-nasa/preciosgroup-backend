@@ -1,21 +1,35 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { CustomersModule } from './customers/customers.module';
-import { ServicesModule } from './services/services.module';
+import { ProcessesModule } from './processes/processes.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { configEnviroments, enviroments } from './utils/enviroments.utils';
 import { ConfigModule } from '@nestjs/config';
+import { LogsModule } from './logs/logs.module';
+import { OrdersModule } from './orders/orders.module';
+import { FilesModule } from './files/files.module';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { PermissionsModule } from './permissions/permissions.module';
+import { RolesModule } from './roles/roles.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
+    FilesModule,
+    LogsModule,
+    OrdersModule,
     CustomersModule,
-    ServicesModule,
+    ProcessesModule,
     AuthenticationModule,
+    PermissionsModule,
+    RolesModule,
+    SeedModule,
     TypeOrmModule.forRoot({
       type: enviroments.DATABASE_TYPE,
       host: enviroments.DATABASE_HOST,
@@ -30,6 +44,12 @@ import { ConfigModule } from '@nestjs/config';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
