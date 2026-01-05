@@ -5,18 +5,17 @@ import { AuthenticationController } from './authentication.controller';
 import { UsersService } from 'src/users/users.service';
 import { UserEntity } from 'src/users/users.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RolesGuard } from './guards/roles.guard';
-import { PermissionsGuard } from './guards/permissions.guard';
-import { CombinedAuthGuard } from './guards/combined-auth.guard';
-import { BypassAuthGuard } from './guards/bypass-auth.guard';
+import { PermissionsGuard } from './guards/user-permissions.guard';
 import { enviroments } from 'src/utils/enviroments.utils';
 import { LogsModule } from 'src/logs/logs.module';
-
-console.log('SECRET_KEY:', enviroments.SECRET_KEY);
+import { RolesService } from 'src/roles/roles.service';
+import { Role } from 'src/roles/roles.entity';
+import { PermissionsService } from 'src/permissions/permissions.service';
+import { Permission } from 'src/permissions/permissions.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([Role, UserEntity, Permission]),
     JwtModule.register({
       global: true,
       secret: enviroments.SECRET_KEY,
@@ -27,12 +26,11 @@ console.log('SECRET_KEY:', enviroments.SECRET_KEY);
   providers: [
     AuthenticationService,
     UsersService,
-    RolesGuard,
     PermissionsGuard,
-    CombinedAuthGuard,
-    BypassAuthGuard,
+    RolesService,
+    PermissionsService,
   ],
   controllers: [AuthenticationController],
-  exports: [RolesGuard, PermissionsGuard, CombinedAuthGuard, BypassAuthGuard],
+  exports: [PermissionsGuard, UsersService, RolesService, PermissionsService],
 })
 export class AuthenticationModule {}

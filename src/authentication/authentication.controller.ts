@@ -39,19 +39,18 @@ export class AuthenticationController {
   @ApiResponse({
     status: 200,
     description:
-      'User authenticated successfully (tokens sent via httpOnly cookies)',
+      'User authenticated successfully (tokens sent via httpOnly cookies; access_token and refresh_token returned only in non-production environments)',
     schema: {
       type: 'object',
       properties: {
         message: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            fullName: { type: 'string' },
-            role: { type: 'string' },
-          },
+        access_token: {
+          type: 'string',
+          description: 'Only returned in DEV and TST modes',
+        },
+        refresh_token: {
+          type: 'string',
+          description: 'Only returned in DEV and TST modes',
         },
       },
     },
@@ -62,14 +61,29 @@ export class AuthenticationController {
   })
   async signIn(
     @Body() signInDto: { cpf: string; password: string },
-    @Res() response: Response,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
     const result = await this.authenticationService.signIn(
       signInDto.cpf,
       signInDto.password,
-      response,
     );
-    response.json(result);
+
+    response.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 86400000,
+    });
+    response.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 2592000000,
+    });
+    response.status(200).send({
+      message: result.message,
+      access_token: result.access_token,
+    });
   }
 
   @Public()
@@ -77,34 +91,23 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Refresh access token',
-    description: 'Get a new access token using a refresh token',
-  })
-  @ApiBody({
-    description: 'Refresh token',
-    schema: {
-      type: 'object',
-      properties: {
-        token: { type: 'string' },
-      },
-      required: ['token'],
-    },
+    description: 'Get a new access token using a refresh token from cookies',
   })
   @ApiResponse({
     status: 200,
     description:
-      'Token refreshed successfully (tokens sent via httpOnly cookies)',
+      'Token refreshed successfully (tokens sent via httpOnly cookies; access_token and refresh_token returned only in non-production environments)',
     schema: {
       type: 'object',
       properties: {
         message: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            fullName: { type: 'string' },
-            role: { type: 'string' },
-          },
+        access_token: {
+          type: 'string',
+          description: 'Only returned in DEV and TST modes',
+        },
+        refresh_token: {
+          type: 'string',
+          description: 'Only returned in DEV and TST modes',
         },
       },
     },
@@ -114,17 +117,33 @@ export class AuthenticationController {
     description: 'Invalid token',
   })
   async refreshToken(
-    @Body() refreshTokenDto: { token: string },
-    @Res() response: Response,
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request & { cookies?: Record<string, string> },
   ): Promise<void> {
-    if (!refreshTokenDto.token) {
-      throw new UnauthorizedException('Token is required');
+    const token = request.cookies?.refresh_token;
+
+    if (!token) {
+      throw new UnauthorizedException('Refresh token is required');
     }
-    const result = await this.authenticationService.refreshToken(
-      refreshTokenDto.token,
-      response,
-    );
-    response.status(200).json(result);
+
+    const result = await this.authenticationService.refreshToken(token);
+    response.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 2592000000,
+    });
+    response.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 2592000000,
+    });
+
+    response.status(200).send({
+      message: result.message,
+      access_token: result.access_token,
+    });
   }
 
   @Public()
@@ -132,7 +151,7 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User logout',
-    description: 'Logout user and remove authentication cookie',
+    description: 'Logout user and remove authentication cookies',
   })
   @ApiResponse({
     status: 200,
@@ -146,12 +165,9 @@ export class AuthenticationController {
   })
   async logout(
     @Res() response: Response,
-    @Req() request: Request & { user?: Record<string, unknown> },
+    @Req() request: Request & { cookies?: Record<string, string> },
   ): Promise<void> {
-    const token = (request.cookies?.access_token ||
-      request.headers.authorization?.replace('Bearer ', '')) as
-      | string
-      | undefined;
+    const token = request.cookies?.access_token;
 
     const result = await this.authenticationService.logout(response, token);
     response.status(200).json(result);

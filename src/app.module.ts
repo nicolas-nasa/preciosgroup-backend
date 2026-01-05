@@ -16,19 +16,21 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { SeedModule } from './seed/seed.module';
+import { TypeOfProcessesModule } from './type-of-processes/type-of-processes.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
+    AuthenticationModule,
     FilesModule,
     LogsModule,
     OrdersModule,
     CustomersModule,
     ProcessesModule,
-    AuthenticationModule,
     PermissionsModule,
     RolesModule,
+    TypeOfProcessesModule,
     SeedModule,
     TypeOrmModule.forRoot({
       type: enviroments.DATABASE_TYPE,

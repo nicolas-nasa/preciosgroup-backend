@@ -14,5 +14,5 @@ export class FileEntity extends BaseEntity {
   status: string;
 
   @ManyToOne(() => ProcessEntity, (process) => process.files)
-  process: ProcessEntity;
+  process?: ProcessEntity;
 }

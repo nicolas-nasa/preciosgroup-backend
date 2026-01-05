@@ -16,7 +16,7 @@ export class UserEntity extends BaseEntity {
   @Column({ nullable: true, name: 'contact', type: 'varchar' })
   contact: string;
 
-  @ManyToOne(() => RoleEntity, { nullable: true, eager: true })
+  @ManyToOne(() => RoleEntity, { nullable: true })
   @JoinColumn({ name: 'roleId' })
   role?: RoleEntity;
 

@@ -22,40 +22,50 @@ import {
 } from '@nestjs/swagger';
 import { ProcessesService } from './processes.service';
 import { ProcessEntity } from './processes.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
-import { Roles } from 'src/authentication/decorators/roles.decorator';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 import { Permissions } from 'src/authentication/decorators/permissions.decorator';
-import { Role } from 'src/authentication/enums/role.enum';
 import { Permission } from 'src/authentication/enums/permission.enum';
 
 @ApiTags('Processes')
 @ApiBearerAuth('jwt-auth')
-@ApiBearerAuth('bypass-auth')
 @Controller('processes')
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class ProcessesController {
   constructor(private readonly processesService: ProcessesService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.PROCESSES_CREATE)
   @ApiOperation({
     summary: 'Create new process',
-    description: 'Create a new process (Admin/Manager/Operator only)',
+    description: 'Create a new process',
   })
   @ApiBody({
     description: 'Process creation data',
     schema: {
       type: 'object',
       properties: {
-        orderId: { type: 'string' },
-        amout: { type: 'number' },
-        type: { type: 'string' },
-        status: { type: 'string' },
+        order: {
+          type: 'object',
+          description: 'Order relationship (provide object with id)',
+          properties: {
+            id: { type: 'string', description: 'Order ID (UUID)' }
+          },
+          required: ['id']
+        },
+        typeOfProcess: {
+          type: 'object',
+          description: 'Type of process relationship (provide object with id)',
+          properties: {
+            id: { type: 'string', description: 'Type of Process ID (UUID)' }
+          },
+          required: ['id']
+        },
+        amout: { type: 'number', example: 100 },
+        type: { type: 'string', example: 'standard' },
+        status: { type: 'string', example: 'pending' },
       },
-      required: ['orderId', 'amout', 'type', 'status'],
+      required: ['order', 'typeOfProcess', 'amout', 'type', 'status'],
     },
   })
   @ApiResponse({
@@ -65,7 +75,6 @@ export class ProcessesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        orderId: { type: 'string' },
         amout: { type: 'number' },
         type: { type: 'string' },
         status: { type: 'string' },
@@ -75,6 +84,10 @@ export class ProcessesController {
         deletedBy: { type: 'string', nullable: true },
       },
     },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid data',
   })
   @ApiResponse({
     status: 403,
@@ -119,7 +132,6 @@ export class ProcessesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              orderId: { type: 'string' },
               amout: { type: 'number' },
               type: { type: 'string' },
               status: { type: 'string' },
@@ -160,7 +172,6 @@ export class ProcessesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        orderId: { type: 'string' },
         amout: { type: 'number' },
         type: { type: 'string' },
         status: { type: 'string' },
@@ -217,7 +228,6 @@ export class ProcessesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              orderId: { type: 'string' },
               amout: { type: 'number' },
               type: { type: 'string' },
               status: { type: 'string' },
@@ -278,7 +288,6 @@ export class ProcessesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              orderId: { type: 'string' },
               amout: { type: 'number' },
               type: { type: 'string' },
               status: { type: 'string' },
@@ -303,11 +312,10 @@ export class ProcessesController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.PROCESSES_UPDATE)
   @ApiOperation({
     summary: 'Update process',
-    description: 'Update process information (Admin/Manager/Operator only)',
+    description: 'Update process information',
   })
   @ApiParam({
     name: 'id',
@@ -332,7 +340,6 @@ export class ProcessesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        orderId: { type: 'string' },
         amout: { type: 'number' },
         type: { type: 'string' },
         status: { type: 'string' },
@@ -360,11 +367,10 @@ export class ProcessesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.PROCESSES_DELETE)
   @ApiOperation({
     summary: 'Hard delete process',
-    description: 'Permanently delete a process (Admin only)',
+    description: 'Permanently delete a process',
   })
   @ApiResponse({
     status: 204,
@@ -376,11 +382,10 @@ export class ProcessesController {
 
   @Delete(':id/soft')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.PROCESSES_DELETE)
   @ApiOperation({
     summary: 'Soft delete process',
-    description: 'Soft delete a process (Admin/Manager only)',
+    description: 'Soft delete a process',
   })
   @ApiResponse({
     status: 204,

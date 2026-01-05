@@ -82,16 +82,18 @@ export class UsersService {
 
   async create(userData: Partial<UserEntity>): Promise<UserEntity> {
     try {
-      if (!userData.email || !userData.password) {
-        throw new BadRequestException('Email and password are required');
+      if (!userData.password) {
+        throw new BadRequestException('Password is required');
       }
 
-      const existingUser = await this.usersRepository.findOne({
-        where: { email: userData.email },
-      });
+      if (userData.cpf) {
+        const existingCpf = await this.usersRepository.findOne({
+          where: { cpf: userData.cpf },
+        });
 
-      if (existingUser) {
-        throw new BadRequestException('User with this email already exists');
+        if (existingCpf) {
+          throw new BadRequestException('User with this CPF already exists');
+        }
       }
 
       const user = this.usersRepository.create(userData);
@@ -114,6 +116,16 @@ export class UsersService {
   ): Promise<UserEntity> {
     try {
       const user = await this.findById(id);
+
+      if (updateData.cpf && updateData.cpf !== user.cpf) {
+        const existingCpf = await this.usersRepository.findOne({
+          where: { cpf: updateData.cpf },
+        });
+
+        if (existingCpf) {
+          throw new BadRequestException('User with this CPF already exists');
+        }
+      }
 
       if (updateData.password) {
         updateData.password = this.hashPassword(updateData.password);
@@ -139,7 +151,6 @@ export class UsersService {
     try {
       const user = await this.findById(userId);
 
-      // Allow only these fields for self-update
       const allowedFields: (keyof UserEntity)[] = [
         'fullName',
         'password',
@@ -205,6 +216,23 @@ export class UsersService {
     } catch (error: unknown) {
       this.logger.error(
         `Error soft deleting user: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw error;
+    }
+  }
+
+  async removeRoleFromAllUsers(roleId: string): Promise<void> {
+    try {
+      await this.usersRepository
+        .createQueryBuilder()
+        .update(UserEntity)
+        .set({ roleId: () => 'NULL' })
+        .where('roleId = :roleId', { roleId })
+        .execute();
+      this.logger.log(`Role ${roleId} removed from all users`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error removing role from users: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
     }

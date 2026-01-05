@@ -23,28 +23,23 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UserEntity } from './users.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
-import { Roles } from 'src/authentication/decorators/roles.decorator';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 import { Permissions } from 'src/authentication/decorators/permissions.decorator';
-import { Role } from 'src/authentication/enums/role.enum';
 import { Permission } from 'src/authentication/enums/permission.enum';
 
 @ApiTags('Users')
 @ApiBearerAuth('jwt-auth')
-@ApiBearerAuth('bypass-auth')
 @Controller('users')
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.USERS_CREATE)
   @ApiOperation({
     summary: 'Create new user',
-    description: 'Create a new user (Admin only)',
+    description: 'Create a new user',
   })
   @ApiBody({
     description: 'User creation data',
@@ -58,7 +53,8 @@ export class UsersController {
         password: { type: 'string', example: 'password123' },
         role: {
           type: 'string',
-          enum: ['admin', 'manager', 'operator', 'customer', 'viewer'],
+          enum: ['admin'],
+          description: 'Role assignment (currently only admin role available)',
         },
       },
       required: ['fullName', 'cpf', 'email', 'password'],
@@ -70,15 +66,18 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', format: 'uuid' },
         fullName: { type: 'string' },
         cpf: { type: 'string' },
-        email: { type: 'string' },
-        contact: { type: 'string' },
-        role: { type: 'string' },
+        email: { type: 'string', format: 'email' },
+        contact: { type: 'string', nullable: true },
+        roleId: { type: 'string', format: 'uuid', nullable: true },
         isActive: { type: 'boolean' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedBy: { type: 'string', format: 'uuid', nullable: true },
+        deletedBy: { type: 'string', format: 'uuid', nullable: true },
       },
     },
   })
@@ -104,13 +103,18 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', format: 'uuid' },
         fullName: { type: 'string' },
         cpf: { type: 'string' },
-        email: { type: 'string' },
-        contact: { type: 'string' },
-        role: { type: 'string' },
+        email: { type: 'string', format: 'email' },
+        contact: { type: 'string', nullable: true },
+        roleId: { type: 'string', format: 'uuid', nullable: true },
         isActive: { type: 'boolean' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedBy: { type: 'string', format: 'uuid', nullable: true },
+        deletedBy: { type: 'string', format: 'uuid', nullable: true },
       },
     },
   })
@@ -157,15 +161,18 @@ export class UsersController {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'string', format: 'uuid' },
               fullName: { type: 'string' },
               cpf: { type: 'string' },
-              email: { type: 'string' },
-              contact: { type: 'string' },
-              role: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+              contact: { type: 'string', nullable: true },
+              roleId: { type: 'string', format: 'uuid', nullable: true },
               isActive: { type: 'boolean' },
-              createdAt: { type: 'string' },
-              updatedAt: { type: 'string' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              deletedAt: { type: 'string', format: 'date-time', nullable: true },
+              updatedBy: { type: 'string', format: 'uuid', nullable: true },
+              deletedBy: { type: 'string', format: 'uuid', nullable: true },
             },
           },
         },
@@ -202,15 +209,18 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', format: 'uuid' },
         fullName: { type: 'string' },
         cpf: { type: 'string' },
-        email: { type: 'string' },
-        contact: { type: 'string' },
-        role: { type: 'string' },
+        email: { type: 'string', format: 'email' },
+        contact: { type: 'string', nullable: true },
+        roleId: { type: 'string', format: 'uuid', nullable: true },
         isActive: { type: 'boolean' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedBy: { type: 'string', format: 'uuid', nullable: true },
+        deletedBy: { type: 'string', format: 'uuid', nullable: true },
       },
     },
   })
@@ -288,11 +298,10 @@ export class UsersController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.USERS_UPDATE)
   @ApiOperation({
     summary: 'Update user',
-    description: 'Update user information (Admin only)',
+    description: 'Update user information',
   })
   @ApiParam({
     name: 'id',
@@ -308,7 +317,8 @@ export class UsersController {
         contact: { type: 'string' },
         role: {
           type: 'string',
-          enum: ['admin', 'manager', 'operator', 'customer', 'viewer'],
+          enum: ['admin'],
+          description: 'Role assignment (currently only admin role available)',
         },
         password: { type: 'string' },
       },
@@ -349,11 +359,10 @@ export class UsersController {
 
   @Delete(':id/soft')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.USERS_DELETE)
   @ApiOperation({
     summary: 'Soft delete user',
-    description: 'Soft delete a user (mark as deleted, Admin only)',
+    description: 'Soft delete a user (mark as deleted)',
   })
   @ApiParam({
     name: 'id',
@@ -374,11 +383,10 @@ export class UsersController {
 
   @Put(':id/deactivate')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.USERS_UPDATE)
   @ApiOperation({
     summary: 'Deactivate user',
-    description: 'Deactivate a user account (Admin only)',
+    description: 'Deactivate a user account',
   })
   @ApiParam({
     name: 'id',

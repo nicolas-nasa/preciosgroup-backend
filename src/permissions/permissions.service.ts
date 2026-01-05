@@ -18,22 +18,18 @@ export class PermissionsService {
   }
 
   async findAll(): Promise<Permission[]> {
-    return await this.permissionsRepository.find({
-      relations: ['roles'],
-    });
+    return await this.permissionsRepository.find();
   }
 
   async findOne(id: string): Promise<Permission | null> {
     return await this.permissionsRepository.findOne({
       where: { id },
-      relations: ['roles'],
     });
   }
 
   async findByKey(key: string): Promise<Permission | null> {
     return await this.permissionsRepository.findOne({
       where: { key },
-      relations: ['roles'],
     });
   }
 

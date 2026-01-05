@@ -6,16 +6,13 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AddPermissionDto } from './dto/add-permission.dto';
-import { RolesGuard } from '../authentication/guards/roles.guard';
-import { Roles } from '../authentication/decorators/roles.decorator';
-import { Role as RoleEnum } from '../authentication/enums/role.enum';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -23,16 +20,19 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
+import { Permissions } from 'src/authentication/decorators/permissions.decorator';
+import { Permission } from 'src/authentication/enums/permission.enum';
 
-@ApiTags('roles')
-@ApiBearerAuth()
+@ApiTags('Roles')
+@ApiBearerAuth('jwt-auth')
 @Controller('roles')
-@UseGuards(RolesGuard)
-@Roles(RoleEnum.ADMIN)
+@UseGuards(PermissionsGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
+  @Permissions(Permission.ROLES_CREATE)
   @ApiOperation({
     summary: 'Create a new role',
     description:
@@ -42,15 +42,15 @@ export class RolesController {
     status: 201,
     description: 'Role created successfully',
     schema: {
-      example: {
-        id: 'uuid-1',
-        name: 'Manager',
-        description: 'Manager with limited access',
-        key: 'manager',
-        isActive: true,
-        createdAt: '2024-12-31T10:00:00.000Z',
-        updatedAt: '2024-12-31T10:00:00.000Z',
-        permissions: [],
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        key: { type: 'string' },
+        isActive: { type: 'boolean' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
       },
     },
   })
@@ -62,6 +62,7 @@ export class RolesController {
   }
 
   @Get()
+  @Permissions(Permission.ROLES_READ)
   @ApiOperation({
     summary: 'Get all roles',
     description:
@@ -71,24 +72,19 @@ export class RolesController {
     status: 200,
     description: 'List of all roles',
     schema: {
-      example: [
-        {
-          id: 'uuid-1',
-          name: 'Admin',
-          description: 'Administrator with full access',
-          key: 'admin',
-          isActive: true,
-          createdAt: '2024-12-31T10:00:00.000Z',
-          updatedAt: '2024-12-31T10:00:00.000Z',
-          permissions: [
-            {
-              id: 'uuid-perm-1',
-              name: 'Create Users',
-              key: 'users:create',
-            },
-          ],
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          key: { type: 'string' },
+          isActive: { type: 'boolean' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
         },
-      ],
+      },
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -97,7 +93,45 @@ export class RolesController {
     return await this.rolesService.findAll();
   }
 
+  @Get(':id/permissions')
+  @Permissions(Permission.ROLES_READ)
+  @ApiOperation({
+    summary: 'Get permissions for a specific role',
+    description:
+      'Retrieve all permissions associated with a specific role by role ID',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the role',
+    example: 'uuid-1',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of permissions for the role',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          key: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Role not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async getPermissionsByRole(@Param('id') id: string) {
+    return await this.rolesService.getPermissionsByRole(id);
+  }
+
   @Get(':id')
+  @Permissions(Permission.ROLES_READ)
   @ApiOperation({
     summary: 'Get a specific role',
     description:
@@ -112,21 +146,15 @@ export class RolesController {
     status: 200,
     description: 'Role found',
     schema: {
-      example: {
-        id: 'uuid-1',
-        name: 'Manager',
-        description: 'Manager with limited access',
-        key: 'manager',
-        isActive: true,
-        createdAt: '2024-12-31T10:00:00.000Z',
-        updatedAt: '2024-12-31T10:00:00.000Z',
-        permissions: [
-          {
-            id: 'uuid-perm-1',
-            name: 'Create Users',
-            key: 'users:create',
-          },
-        ],
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        key: { type: 'string' },
+        isActive: { type: 'boolean' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
       },
     },
   })
@@ -142,6 +170,7 @@ export class RolesController {
   }
 
   @Patch(':id')
+  @Permissions(Permission.ROLES_UPDATE)
   @ApiOperation({
     summary: 'Update a role',
     description:
@@ -177,6 +206,7 @@ export class RolesController {
   }
 
   @Post(':roleId/permissions')
+  @Permissions(Permission.ROLES_UPDATE)
   @ApiOperation({
     summary: 'Add a permission to a role',
     description:
@@ -226,6 +256,7 @@ export class RolesController {
   }
 
   @Delete(':roleId/permissions/:permissionId')
+  @Permissions(Permission.ROLES_UPDATE)
   @ApiOperation({
     summary: 'Remove a permission from a role',
     description:
@@ -270,6 +301,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @Permissions(Permission.ROLES_DELETE)
   @ApiOperation({
     summary: 'Delete a role',
     description:

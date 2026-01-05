@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProcessesController } from './processes.controller';
 import { ProcessesService } from './processes.service';
 import { ProcessEntity } from './processes.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
 import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
 
 describe('ProcessesController', () => {
@@ -39,17 +38,11 @@ describe('ProcessesController', () => {
           },
         },
         {
-          provide: 'RolesGuard',
-          useValue: { canActivate: () => true },
-        },
-        {
           provide: 'PermissionsGuard',
           useValue: { canActivate: () => true },
         },
       ],
     })
-      .overrideGuard(RolesGuard)
-      .useValue({ canActivate: () => true })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: () => true })
       .compile();

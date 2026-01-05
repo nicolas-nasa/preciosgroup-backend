@@ -117,6 +117,16 @@ export class CustomersService {
     try {
       const customer = await this.findById(id);
 
+      if (updateCustomerDto.cnpj && updateCustomerDto.cnpj !== customer.cnpj) {
+        const existingCnpj = await this.customersRepository.findOne({
+          where: { cnpj: updateCustomerDto.cnpj },
+        });
+
+        if (existingCnpj) {
+          throw new BadRequestException('Customer with this CNPJ already exists');
+        }
+      }
+
       Object.assign(customer, updateCustomerDto);
       const updatedCustomer = await this.customersRepository.save(customer);
 

@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PermissionsService } from '../permissions/permissions.service';
 import { RolesService } from '../roles/roles.service';
+import { UsersService } from '../users/users.service';
 import { Permission as PermissionEnum } from '../authentication/enums/permission.enum';
 import { Role as RoleEnum } from '../authentication/enums/role.enum';
 import { CreatePermissionDto } from '../permissions/dto/create-permission.dto';
 import { CreateRoleDto } from '../roles/dto/create-role.dto';
 import { Permission } from '../permissions/permissions.entity';
 import { Role } from '../roles/roles.entity';
+import { UserEntity } from '../users/users.entity';
 
 @Injectable()
 export class SeedService {
@@ -15,13 +18,16 @@ export class SeedService {
   constructor(
     private readonly permissionsService: PermissionsService,
     private readonly rolesService: RolesService,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   async seedDatabase(): Promise<void> {
     this.logger.log('Starting database seed...');
 
     const permissions = await this.seedPermissions();
-    await this.seedRoles(permissions);
+    const role = await this.seedRoles(permissions);
+    await this.seedDefaultUserIfNeeded(role);
 
     this.logger.log(`✅ Database seed completed successfully!`);
   }
@@ -30,7 +36,12 @@ export class SeedService {
     this.logger.log('Seeding permissions...');
 
     const permissionsData: CreatePermissionDto[] = [
-      // Users
+      {
+        name: 'Read Permissions',
+        description: 'Permission to read permission information',
+        key: PermissionEnum.PERMISSIONS_READ,
+      },
+
       {
         name: 'Create Users',
         description: 'Permission to create new users',
@@ -52,7 +63,6 @@ export class SeedService {
         key: PermissionEnum.USERS_DELETE,
       },
 
-      // Customers
       {
         name: 'Create Customers',
         description: 'Permission to create new customers',
@@ -74,7 +84,6 @@ export class SeedService {
         key: PermissionEnum.CUSTOMERS_DELETE,
       },
 
-      // Orders
       {
         name: 'Create Orders',
         description: 'Permission to create new orders',
@@ -96,7 +105,6 @@ export class SeedService {
         key: PermissionEnum.ORDERS_DELETE,
       },
 
-      // Processes
       {
         name: 'Create Processes',
         description: 'Permission to create new processes',
@@ -118,7 +126,6 @@ export class SeedService {
         key: PermissionEnum.PROCESSES_DELETE,
       },
 
-      // Files
       {
         name: 'Create Files',
         description: 'Permission to create/upload files',
@@ -140,16 +147,51 @@ export class SeedService {
         key: PermissionEnum.FILES_DELETE,
       },
 
-      // Logs
       {
         name: 'Read Logs',
         description: 'Permission to read system logs',
         key: PermissionEnum.LOGS_READ,
       },
       {
-        name: 'Delete Logs',
-        description: 'Permission to delete logs',
-        key: PermissionEnum.LOGS_DELETE,
+        name: 'Create Type of Processes',
+        description: 'Permission to create new types of processes',
+        key: PermissionEnum.TYPE_OF_PROCESSES_CREATE,
+      },
+      {
+        name: 'Read Type of Processes',
+        description: 'Permission to read type of process information',
+        key: PermissionEnum.TYPE_OF_PROCESSES_READ,
+      },
+      {
+        name: 'Update Type of Processes',
+        description: 'Permission to update type of process information',
+        key: PermissionEnum.TYPE_OF_PROCESSES_UPDATE,
+      },
+      {
+        name: 'Delete Type of Processes',
+        description: 'Permission to delete types of processes',
+        key: PermissionEnum.TYPE_OF_PROCESSES_DELETE,
+      },
+
+      {
+        name: 'Create Roles',
+        description: 'Permission to create new roles',
+        key: PermissionEnum.ROLES_CREATE,
+      },
+      {
+        name: 'Read Roles',
+        description: 'Permission to read role information',
+        key: PermissionEnum.ROLES_READ,
+      },
+      {
+        name: 'Update Roles',
+        description: 'Permission to update role information',
+        key: PermissionEnum.ROLES_UPDATE,
+      },
+      {
+        name: 'Delete Roles',
+        description: 'Permission to delete roles',
+        key: PermissionEnum.ROLES_DELETE,
       },
     ];
 
@@ -160,83 +202,56 @@ export class SeedService {
     return result;
   }
 
-  private async seedRoles(permissions: Permission[]): Promise<Role[]> {
+  private async seedRoles(permissions: Permission[]): Promise<Role> {
     this.logger.log('Seeding roles...');
 
-    const permissionMap = new Map(permissions.map((p) => [p.key, p.id]));
+    const rolesData: CreateRoleDto = {
+      name: 'Admin',
+      description: 'Administrator with full access',
+      key: RoleEnum.ADMIN,
+      permissionIds: permissions.map((p) => p.id),
+      isActive: true,
+    };
 
-    const rolesData: CreateRoleDto[] = [
-      {
-        name: 'Admin',
-        description: 'Administrator with full access',
-        key: RoleEnum.ADMIN,
-        permissionIds: permissions.map((p) => p.id),
-        isActive: true,
-      },
-      {
-        name: 'Manager',
-        description: 'Manager with limited access',
-        key: RoleEnum.MANAGER,
-        permissionIds: [
-          permissionMap.get(PermissionEnum.USERS_READ) || '',
-          permissionMap.get(PermissionEnum.USERS_UPDATE) || '',
-          permissionMap.get(PermissionEnum.CUSTOMERS_CREATE) || '',
-          permissionMap.get(PermissionEnum.CUSTOMERS_READ) || '',
-          permissionMap.get(PermissionEnum.CUSTOMERS_UPDATE) || '',
-          permissionMap.get(PermissionEnum.ORDERS_CREATE) || '',
-          permissionMap.get(PermissionEnum.ORDERS_READ) || '',
-          permissionMap.get(PermissionEnum.ORDERS_UPDATE) || '',
-          permissionMap.get(PermissionEnum.PROCESSES_CREATE) || '',
-          permissionMap.get(PermissionEnum.PROCESSES_READ) || '',
-          permissionMap.get(PermissionEnum.PROCESSES_UPDATE) || '',
-          permissionMap.get(PermissionEnum.FILES_READ) || '',
-          permissionMap.get(PermissionEnum.LOGS_READ) || '',
-        ].filter((id): id is string => Boolean(id)),
-        isActive: true,
-      },
-      {
-        name: 'Operator',
-        description: 'Operator with read and create access',
-        key: RoleEnum.OPERATOR,
-        permissionIds: [
-          permissionMap.get(PermissionEnum.CUSTOMERS_READ) || '',
-          permissionMap.get(PermissionEnum.CUSTOMERS_CREATE) || '',
-          permissionMap.get(PermissionEnum.ORDERS_READ) || '',
-          permissionMap.get(PermissionEnum.ORDERS_CREATE) || '',
-          permissionMap.get(PermissionEnum.PROCESSES_READ) || '',
-          permissionMap.get(PermissionEnum.PROCESSES_CREATE) || '',
-          permissionMap.get(PermissionEnum.FILES_READ) || '',
-          permissionMap.get(PermissionEnum.FILES_CREATE) || '',
-        ].filter((id): id is string => Boolean(id)),
-        isActive: true,
-      },
-      {
-        name: 'Customer',
-        description: 'Customer with read-only access',
-        key: RoleEnum.CUSTOMER,
-        permissionIds: [
-          permissionMap.get(PermissionEnum.CUSTOMERS_READ) || '',
-          permissionMap.get(PermissionEnum.ORDERS_READ) || '',
-          permissionMap.get(PermissionEnum.FILES_READ) || '',
-        ].filter((id): id is string => Boolean(id)),
-        isActive: true,
-      },
-      {
-        name: 'Viewer',
-        description: 'Viewer with minimal read-only access',
-        key: RoleEnum.VIEWER,
-        permissionIds: [
-          permissionMap.get(PermissionEnum.CUSTOMERS_READ) || '',
-          permissionMap.get(PermissionEnum.ORDERS_READ) || '',
-        ].filter((id): id is string => Boolean(id)),
-        isActive: true,
-      },
-    ];
+    const result = await this.rolesService.seedRoles([rolesData]);
 
-    const result = await this.rolesService.seedRoles(rolesData);
+    this.logger.log(`✅ ${result.length} role seeded`);
 
-    this.logger.log(`✅ ${result.length} roles seeded`);
+    return result[0];
+  }
 
-    return result;
+  private async seedDefaultUserIfNeeded(adminRole: Role): Promise<void> {
+    this.logger.log('Checking if default user needs to be created...');
+
+    try {
+      const existingUsers = await this.usersService.findAll(1, 1);
+
+      if (existingUsers.total > 0) {
+        this.logger.log(
+          '✅ Users already exist in the database. Skipping default user creation.',
+        );
+        return;
+      }
+
+      this.logger.log('No users found. Creating default user...');
+
+      const defaultUser: Partial<UserEntity> = {
+        fullName: this.configService.get('DEFAULT_USER_FULL_NAME'),
+        cpf: this.configService.get('DEFAULT_USER_CPF'),
+        email: this.configService.get('DEFAULT_USER_EMAIL'),
+        password: this.configService.get('DEFAULT_USER_PASSWORD'),
+        contact: this.configService.get('DEFAULT_USER_CONTACT'),
+        role: adminRole,
+        isActive: true,
+      };
+
+      const user = await this.usersService.create(defaultUser);
+
+      this.logger.log(`✅ Default user created with email: ${user.email}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error seeding default user: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }

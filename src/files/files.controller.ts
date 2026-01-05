@@ -22,40 +22,42 @@ import {
 } from '@nestjs/swagger';
 import { FilesService } from './files.service';
 import { FileEntity } from './files.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
-import { Roles } from 'src/authentication/decorators/roles.decorator';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 import { Permissions } from 'src/authentication/decorators/permissions.decorator';
-import { Role } from 'src/authentication/enums/role.enum';
 import { Permission } from 'src/authentication/enums/permission.enum';
 
 @ApiTags('Files')
 @ApiBearerAuth('jwt-auth')
-@ApiBearerAuth('bypass-auth')
 @Controller('files')
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.FILES_CREATE)
   @ApiOperation({
     summary: 'Create new file',
-    description: 'Create a new file (Admin/Manager/Operator only)',
+    description: 'Create a new file',
   })
   @ApiBody({
     description: 'File creation data',
     schema: {
       type: 'object',
       properties: {
-        processId: { type: 'string' },
-        name: { type: 'number' },
-        type: { type: 'string' },
-        status: { type: 'string' },
+        process: {
+          type: 'object',
+          description: 'Process relationship (provide object with id)',
+          properties: {
+            id: { type: 'string', description: 'Process ID (UUID)' }
+          },
+          required: ['id']
+        },
+        name: { type: 'string', example: 'document.pdf' },
+        type: { type: 'string', example: 'pdf' },
+        status: { type: 'string', example: 'active' },
       },
-      required: ['name', 'type', 'status'],
+      required: ['process', 'name', 'type', 'status'],
     },
   })
   @ApiResponse({
@@ -65,8 +67,7 @@ export class FilesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        processId: { type: 'string' },
-        name: { type: 'number' },
+        name: { type: 'string' },
         type: { type: 'string' },
         status: { type: 'string' },
         createdAt: { type: 'string' },
@@ -75,6 +76,10 @@ export class FilesController {
         deletedBy: { type: 'string', nullable: true },
       },
     },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid data',
   })
   @ApiResponse({
     status: 403,
@@ -119,8 +124,7 @@ export class FilesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              processId: { type: 'string' },
-              name: { type: 'number' },
+              name: { type: 'string' },
               type: { type: 'string' },
               status: { type: 'string' },
               createdAt: { type: 'string' },
@@ -160,8 +164,7 @@ export class FilesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        processId: { type: 'string' },
-        name: { type: 'number' },
+        name: { type: 'string' },
         type: { type: 'string' },
         status: { type: 'string' },
         createdAt: { type: 'string' },
@@ -217,8 +220,7 @@ export class FilesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              processId: { type: 'string' },
-              name: { type: 'number' },
+              name: { type: 'string' },
               type: { type: 'string' },
               status: { type: 'string' },
               createdAt: { type: 'string' },
@@ -278,8 +280,7 @@ export class FilesController {
             type: 'object',
             properties: {
               id: { type: 'string' },
-              processId: { type: 'string' },
-              name: { type: 'number' },
+              name: { type: 'string' },
               type: { type: 'string' },
               status: { type: 'string' },
               createdAt: { type: 'string' },
@@ -303,11 +304,10 @@ export class FilesController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.FILES_UPDATE)
   @ApiOperation({
     summary: 'Update file',
-    description: 'Update file information (Admin/Manager/Operator only)',
+    description: 'Update file information',
   })
   @ApiParam({
     name: 'id',
@@ -319,7 +319,7 @@ export class FilesController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'number' },
+        name: { type: 'string' },
         type: { type: 'string' },
         status: { type: 'string' },
       },
@@ -332,8 +332,7 @@ export class FilesController {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        processId: { type: 'string' },
-        name: { type: 'number' },
+        name: { type: 'string' },
         type: { type: 'string' },
         status: { type: 'string' },
         createdAt: { type: 'string' },
@@ -360,11 +359,10 @@ export class FilesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.FILES_DELETE)
   @ApiOperation({
     summary: 'Hard delete file',
-    description: 'Permanently delete a file (Admin only)',
+    description: 'Permanently delete a file',
   })
   @ApiParam({
     name: 'id',
@@ -381,11 +379,10 @@ export class FilesController {
 
   @Delete(':id/soft')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.FILES_DELETE)
   @ApiOperation({
     summary: 'Soft delete file',
-    description: 'Soft delete a file (Admin/Manager only)',
+    description: 'Soft delete a file',
   })
   @ApiParam({
     name: 'id',

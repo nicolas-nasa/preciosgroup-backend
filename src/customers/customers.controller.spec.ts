@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
 import { CustomerEntity } from './customers.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
 import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
 
 describe('CustomersController', () => {
@@ -38,17 +37,11 @@ describe('CustomersController', () => {
           },
         },
         {
-          provide: 'RolesGuard',
-          useValue: { canActivate: () => true },
-        },
-        {
           provide: 'PermissionsGuard',
           useValue: { canActivate: () => true },
         },
       ],
     })
-      .overrideGuard(RolesGuard)
-      .useValue({ canActivate: () => true })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: () => true })
       .compile();

@@ -7,7 +7,7 @@ export class CustomerEntity extends BaseEntity {
   @Column({ name: 'company_name', type: 'varchar' })
   companyName: string;
 
-  @Column({ name: 'rg', type: 'varchar', unique: true })
+  @Column({ name: 'cnpj', type: 'varchar', unique: true })
   cnpj: string;
 
   @Column({ name: 'representant_name', type: 'varchar' })
@@ -16,6 +16,6 @@ export class CustomerEntity extends BaseEntity {
   @Column({ name: 'representant_contact', type: 'varchar' })
   representantContact: string;
 
-  @OneToMany(() => OrderEntity, (order) => order.customer)
-  orders: OrderEntity[];
+  @OneToMany(() => OrderEntity, (order) => order.customer, { lazy: false })
+  orders?: OrderEntity[];
 }

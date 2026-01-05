@@ -22,36 +22,31 @@ import {
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderEntity } from './orders.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
-import { Roles } from 'src/authentication/decorators/roles.decorator';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 import { Permissions } from 'src/authentication/decorators/permissions.decorator';
-import { Role } from 'src/authentication/enums/role.enum';
 import { Permission } from 'src/authentication/enums/permission.enum';
 
 @ApiTags('Orders')
 @ApiBearerAuth('jwt-auth')
-@ApiBearerAuth('bypass-auth')
 @Controller('orders')
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.ORDERS_CREATE)
   @ApiOperation({
     summary: 'Create new order',
-    description: 'Create a new order (Admin/Manager/Operator only)',
+    description: 'Create a new order',
   })
   @ApiBody({
     description: 'Order creation data',
     schema: {
       type: 'object',
       properties: {
-        status: { type: 'string' },
-        customerId: { type: 'string' },
+        status: { type: 'string', example: 'pending' },
+        customerId: { type: 'string', description: 'Customer ID (UUID)' },
       },
       required: ['status', 'customerId'],
     },
@@ -62,15 +57,21 @@ export class OrdersController {
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', format: 'uuid' },
         status: { type: 'string' },
-        customerId: { type: 'string' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        deletedAt: { type: 'string', nullable: true },
-        deletedBy: { type: 'string', nullable: true },
+        customerId: { type: 'string', format: 'uuid', nullable: true },
+        isActive: { type: 'boolean' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedBy: { type: 'string', format: 'uuid', nullable: true },
+        deletedBy: { type: 'string', format: 'uuid', nullable: true },
       },
     },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid data',
   })
   @ApiResponse({
     status: 403,
@@ -116,7 +117,6 @@ export class OrdersController {
             properties: {
               id: { type: 'string' },
               status: { type: 'string' },
-              customerId: { type: 'string' },
               createdAt: { type: 'string' },
               updatedAt: { type: 'string' },
               deletedAt: { type: 'string', nullable: true },
@@ -159,7 +159,6 @@ export class OrdersController {
       properties: {
         id: { type: 'string' },
         status: { type: 'string' },
-        customerId: { type: 'string' },
         createdAt: { type: 'string' },
         updatedAt: { type: 'string' },
         deletedAt: { type: 'string', nullable: true },
@@ -214,7 +213,6 @@ export class OrdersController {
             properties: {
               id: { type: 'string' },
               status: { type: 'string' },
-              customerId: { type: 'string' },
               createdAt: { type: 'string' },
               updatedAt: { type: 'string' },
               deletedAt: { type: 'string', nullable: true },
@@ -273,7 +271,6 @@ export class OrdersController {
             properties: {
               id: { type: 'string' },
               status: { type: 'string' },
-              customerId: { type: 'string' },
               createdAt: { type: 'string' },
               updatedAt: { type: 'string' },
               deletedAt: { type: 'string', nullable: true },
@@ -295,11 +292,10 @@ export class OrdersController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN, Role.MANAGER, Role.OPERATOR)
   @Permissions(Permission.ORDERS_UPDATE)
   @ApiOperation({
     summary: 'Update order',
-    description: 'Update order information (Admin/Manager/Operator only)',
+    description: 'Update order information',
   })
   @ApiParam({
     name: 'id',
@@ -323,7 +319,6 @@ export class OrdersController {
       properties: {
         id: { type: 'string' },
         status: { type: 'string' },
-        customerId: { type: 'string' },
         createdAt: { type: 'string' },
         updatedAt: { type: 'string' },
         deletedAt: { type: 'string', nullable: true },
@@ -348,11 +343,10 @@ export class OrdersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.ORDERS_DELETE)
   @ApiOperation({
     summary: 'Hard delete order',
-    description: 'Permanently delete an order (Admin only)',
+    description: 'Permanently delete an order',
   })
   @ApiResponse({
     status: 204,
@@ -364,11 +358,10 @@ export class OrdersController {
 
   @Delete(':id/soft')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.ORDERS_DELETE)
   @ApiOperation({
     summary: 'Soft delete order',
-    description: 'Soft delete an order (Admin/Manager only)',
+    description: 'Soft delete an order',
   })
   @ApiResponse({
     status: 204,

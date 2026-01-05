@@ -5,11 +5,11 @@ import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'orders' })
 export class OrderEntity extends BaseEntity {
-  @Column({ name: 'cpf', type: 'varchar' })
+  @Column({ name: 'status', type: 'varchar' })
   status: string;
 
-  @OneToMany(() => ProcessEntity, (process) => process.order)
-  processes: ProcessEntity[];
+  @OneToMany(() => ProcessEntity, (process) => process.order, { lazy: false })
+  processes?: ProcessEntity[];
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.orders)
   customer: CustomerEntity;

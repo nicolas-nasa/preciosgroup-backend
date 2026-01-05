@@ -18,13 +18,16 @@ export class AuthenticationService {
   async signIn(
     cpf: string,
     password: string,
-    response?: Response,
-  ): Promise<{ message: string; user?: any }> {
+  ): Promise<{
+    message: string;
+    access_token: string;
+    refresh_token: string;
+    user: any;
+  }> {
     try {
       const user = await this.usersService.findByCpf(cpf);
 
       if (!user) {
-        // Registrar log de falha de login
         await this.logsService.create({
           module: 'authentication',
           route: '/authentication/sign-in',
@@ -39,7 +42,6 @@ export class AuthenticationService {
       }
 
       if (!user.isActive) {
-        // Registrar log de usuário inativo
         await this.logsService.create({
           module: 'authentication',
           route: '/authentication/sign-in',
@@ -59,7 +61,6 @@ export class AuthenticationService {
       );
 
       if (!isPasswordValid) {
-        // Registrar log de senha inválida
         await this.logsService.create({
           module: 'authentication',
           route: '/authentication/sign-in',
@@ -74,33 +75,14 @@ export class AuthenticationService {
       }
 
       const payload = {
-        username: user.email,
         sub: user.id,
-        role: user.role,
       };
 
       const access_token = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '30d' });
 
-      // Set httpOnly cookies if response is provided
-      if (response) {
-        response.cookie('access_token', access_token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 3600000, // 1 hour in milliseconds
-        });
-        response.cookie('refresh_token', refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 2592000000, // 30 days in milliseconds
-        });
-      }
-
       this.logger.log(`User signed in: ${cpf}`);
 
-      // Registrar log de login com sucesso
       await this.logsService.create({
         module: 'authentication',
         route: '/authentication/sign-in',
@@ -113,6 +95,8 @@ export class AuthenticationService {
 
       return {
         message: 'Signed in successfully',
+        access_token,
+        refresh_token: refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -132,17 +116,17 @@ export class AuthenticationService {
     }
   }
 
-  async refreshToken(
-    token: string,
-    response?: Response,
-  ): Promise<{ message: string; user?: any }> {
+  async refreshToken(token: string): Promise<{
+    message: string;
+    access_token: string;
+    refresh_token: string;
+    user: any;
+  }> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const decodedToken = this.jwtService.decode(token);
       const decoded = decodedToken as { sub?: string } | null;
 
       if (!decoded || !decoded.sub) {
-        // Registrar log de token inválido
         await this.logsService.create({
           module: 'authentication',
           route: '/authentication/refresh-token',
@@ -159,7 +143,6 @@ export class AuthenticationService {
       const user = await this.usersService.findById(decoded.sub);
 
       if (!user || !user.isActive) {
-        // Registrar log de usuário não encontrado ou inativo
         const result = !user ? ResultEnum.NOT_FOUND : ResultEnum.USER_INACTIVE;
 
         await this.logsService.create({
@@ -176,33 +159,15 @@ export class AuthenticationService {
       }
 
       const payload = {
-        username: user.email,
         sub: user.id,
-        role: user.role,
+        r: user.role,
       };
 
       const access_token = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '30d' });
 
-      // Set httpOnly cookies if response is provided
-      if (response) {
-        response.cookie('access_token', access_token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 3600000, // 1 hour in milliseconds
-        });
-        response.cookie('refresh_token', refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 2592000000, // 30 days in milliseconds
-        });
-      }
-
       this.logger.log(`Token refreshed for user: ${user.id}`);
 
-      // Registrar log de refresh token com sucesso
       await this.logsService.create({
         module: 'authentication',
         route: '/authentication/refresh-token',
@@ -215,6 +180,8 @@ export class AuthenticationService {
 
       return {
         message: 'Token refreshed successfully',
+        access_token,
+        refresh_token: refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -240,10 +207,8 @@ export class AuthenticationService {
   ): Promise<{ message: string }> {
     let userId: string | undefined;
 
-    // Extract userId from token if provided
     if (token) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const decodedToken = this.jwtService.decode(token);
         const decoded = decodedToken as { sub?: string } | null;
         userId = decoded?.sub;
@@ -264,7 +229,6 @@ export class AuthenticationService {
     });
     this.logger.log(`User logged out${userId ? ` (${userId})` : ''}`);
 
-    // Registrar log de logout com o userId se disponível
     if (userId) {
       await this.logsService.create({
         module: 'authentication',

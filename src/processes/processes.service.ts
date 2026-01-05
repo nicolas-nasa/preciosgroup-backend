@@ -18,11 +18,37 @@ export class ProcessesService {
   ) {}
 
   async create(
-    createProcessDto: Partial<ProcessEntity>,
+    createProcessDto: Partial<ProcessEntity> & {
+      orderId?: string;
+      typeOfProcessId?: string;
+    },
   ): Promise<ProcessEntity> {
     try {
       if (!createProcessDto.type || !createProcessDto.status) {
         throw new BadRequestException('Type and status are required');
+      }
+
+      if (!createProcessDto.orderId && !createProcessDto.order?.id) {
+        throw new BadRequestException('orderId or order.id is required');
+      }
+
+      if (
+        !createProcessDto.typeOfProcessId &&
+        !createProcessDto.typeOfProcess?.id
+      ) {
+        throw new BadRequestException(
+          'typeOfProcessId or typeOfProcess.id is required',
+        );
+      }
+
+      if (createProcessDto.orderId && !createProcessDto.order) {
+        createProcessDto.order = { id: createProcessDto.orderId } as any;
+      }
+
+      if (createProcessDto.typeOfProcessId && !createProcessDto.typeOfProcess) {
+        createProcessDto.typeOfProcess = {
+          id: createProcessDto.typeOfProcessId,
+        } as any;
       }
 
       const process = this.processesRepository.create(createProcessDto);
@@ -50,7 +76,6 @@ export class ProcessesService {
       const [data, total] = await this.processesRepository.findAndCount({
         skip: (page - 1) * limit,
         take: limit,
-        relations: ['order', 'files'],
       });
 
       return { data, total };
@@ -66,7 +91,6 @@ export class ProcessesService {
     try {
       const process = await this.processesRepository.findOne({
         where: { id },
-        relations: ['order', 'files'],
       });
 
       if (!process) {
@@ -92,7 +116,6 @@ export class ProcessesService {
         where: { order: { id: orderId } },
         skip: (page - 1) * limit,
         take: limit,
-        relations: ['order', 'files'],
       });
 
       return { data, total };
@@ -114,7 +137,6 @@ export class ProcessesService {
         where: { status },
         skip: (page - 1) * limit,
         take: limit,
-        relations: ['order', 'files'],
       });
 
       return { data, total };

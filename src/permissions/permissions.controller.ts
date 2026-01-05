@@ -1,19 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
-import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
-import { RolesGuard } from '../authentication/guards/roles.guard';
-import { Roles } from '../authentication/decorators/roles.decorator';
-import { Role } from '../authentication/enums/role.enum';
+import { PermissionsGuard } from '../authentication/guards/user-permissions.guard';
+import { Permissions } from '../authentication/decorators/permissions.decorator';
+import { Permission } from '../authentication/enums/permission.enum';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -22,42 +11,15 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-@ApiTags('permissions')
-@ApiBearerAuth()
+@ApiTags('Permissions')
+@ApiBearerAuth('jwt-auth')
 @Controller('permissions')
-@UseGuards(RolesGuard)
-@Roles(Role.ADMIN)
+@UseGuards(PermissionsGuard)
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
-  @Post()
-  @ApiOperation({
-    summary: 'Create a new permission',
-    description:
-      'Create a new permission in the system. Only ADMIN users can perform this action.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Permission created successfully',
-    schema: {
-      example: {
-        id: 'uuid-1',
-        name: 'Create Users',
-        description: 'Permission to create new users',
-        key: 'users:create',
-        createdAt: '2024-12-31T10:00:00.000Z',
-        updatedAt: '2024-12-31T10:00:00.000Z',
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  create(@Body() createPermissionDto: CreatePermissionDto) {
-    return this.permissionsService.create(createPermissionDto);
-  }
-
   @Get()
+  @Permissions(Permission.PERMISSIONS_READ)
   @ApiOperation({
     summary: 'Get all permissions',
     description: 'Retrieve a list of all permissions in the system',
@@ -66,25 +28,43 @@ export class PermissionsController {
     status: 200,
     description: 'List of all permissions',
     schema: {
-      example: [
-        {
-          id: 'uuid-1',
-          name: 'Create Users',
-          description: 'Permission to create new users',
-          key: 'users:create',
-          createdAt: '2024-12-31T10:00:00.000Z',
-          updatedAt: '2024-12-31T10:00:00.000Z',
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          key: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          roles: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                key: { type: 'string' },
+                isActive: { type: 'boolean' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
         },
-      ],
+      },
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   findAll() {
     return this.permissionsService.findAll();
   }
 
   @Get(':id')
+  @Permissions(Permission.PERMISSIONS_READ)
   @ApiOperation({
     summary: 'Get a specific permission',
     description: 'Retrieve details of a specific permission by ID',
@@ -98,78 +78,36 @@ export class PermissionsController {
     status: 200,
     description: 'Permission found',
     schema: {
-      example: {
-        id: 'uuid-1',
-        name: 'Create Users',
-        description: 'Permission to create new users',
-        key: 'users:create',
-        createdAt: '2024-12-31T10:00:00.000Z',
-        updatedAt: '2024-12-31T10:00:00.000Z',
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        key: { type: 'string' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        roles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              description: { type: 'string' },
+              key: { type: 'string' },
+              isActive: { type: 'boolean' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
       },
     },
   })
   @ApiResponse({ status: 404, description: 'Permission not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   findOne(@Param('id') id: string) {
     return this.permissionsService.findOne(id);
-  }
-
-  @Patch(':id')
-  @ApiOperation({
-    summary: 'Update a permission',
-    description:
-      'Update an existing permission. Only ADMIN users can perform this action.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID of the permission to update',
-    example: 'uuid-1',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Permission updated successfully',
-    schema: {
-      example: {
-        id: 'uuid-1',
-        name: 'Create Users',
-        description: 'Permission to create new users',
-        key: 'users:create',
-        createdAt: '2024-12-31T10:00:00.000Z',
-        updatedAt: '2024-12-31T10:01:00.000Z',
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  @ApiResponse({ status: 404, description: 'Permission not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  update(
-    @Param('id') id: string,
-    @Body() updatePermissionDto: UpdatePermissionDto,
-  ) {
-    return this.permissionsService.update(id, updatePermissionDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a permission',
-    description:
-      'Delete a permission from the system. Only ADMIN users can perform this action.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID of the permission to delete',
-    example: 'uuid-1',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Permission deleted successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Permission not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
-  remove(@Param('id') id: string) {
-    return this.permissionsService.remove(id);
   }
 }

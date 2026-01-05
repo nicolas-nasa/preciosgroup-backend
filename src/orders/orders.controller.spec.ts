@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { OrderEntity } from './orders.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
 import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
 
 describe('OrdersController', () => {
@@ -37,17 +36,11 @@ describe('OrdersController', () => {
           },
         },
         {
-          provide: 'RolesGuard',
-          useValue: { canActivate: () => true },
-        },
-        {
           provide: 'PermissionsGuard',
           useValue: { canActivate: () => true },
         },
       ],
     })
-      .overrideGuard(RolesGuard)
-      .useValue({ canActivate: () => true })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: () => true })
       .compile();

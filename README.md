@@ -8,14 +8,13 @@
 
 ## Overview
 
-This is a comprehensive **NestJS 11.0** backend application built with **TypeORM** and **JWT authentication**. It implements complete **Role-Based Access Control (RBAC)** with:
+This is a comprehensive **NestJS 11.0** backend application built with **TypeORM** and **JWT authentication**. It implements complete **Permission-Based Access Control (PBAC)** with:
 
-- ✅ 5 Roles (ADMIN, MANAGER, OPERATOR, CUSTOMER, VIEWER)
-- ✅ 31 Granular Permissions
-- ✅ 3-Layer Authorization (JWT → Roles → Permissions)
+- ✅ 1 Role (ADMIN)
+- ✅ 26 Granular Permissions
+- ✅ 2-Layer Authorization (JWT → UserPermissionsGuard)
 - ✅ 42 REST Endpoints across 6 Resource Controllers
 - ✅ Complete Swagger/OpenAPI Documentation
-- ✅ 124/124 Tests Passing (15 Test Suites)
 - ✅ Automatic Logging via Interceptors
 - ✅ TypeScript Compilation with 0 Errors
 
@@ -30,9 +29,9 @@ This is a comprehensive **NestJS 11.0** backend application built with **TypeORM
 
 ### Authentication & Authorization
 - **JWT-based authentication** with access token (1h) + refresh token (7d)
-- **Three-layer authorization guards**: JwtAuthGuard → RolesGuard → PermissionsGuard
-- **5 Pre-defined Roles** with customizable permission mapping
-- **31 Granular Permissions** across users, customers, orders, processes, and files
+- **Two-layer authorization guards**: JwtAuthGuard → UserPermissionsGuard
+- **Permission-Based Access Control** with granular permissions per action
+- **26 Granular Permissions** across users, customers, orders, processes, files, logs, and type-of-processes
 - **Swagger-integrated** with @ApiBearerAuth() on all protected endpoints
 
 ### Resource Management
@@ -132,12 +131,8 @@ http://localhost:3000/api/docs
 
 ## RBAC System
 
-### Roles
-1. **ADMIN** - Full system access
-2. **MANAGER** - Customer and order management
-3. **OPERATOR** - Order processing and file handling
-4. **CUSTOMER** - View own orders and files
-5. **VIEWER** - Read-only access to all resources
+### Role
+1. **ADMIN** - Full system access with all permissions
 
 ### Example: Creating a User
 
@@ -187,15 +182,13 @@ src/
 ### Three-Layer Authorization Guard Stack
 
 1. **JwtAuthGuard**: Validates JWT token signature and extracts user
-2. **RolesGuard**: Checks if user role is allowed
-3. **PermissionsGuard**: Checks if user role has required permission
+2. **UserPermissionsGuard**: Checks if user has required permissions
 
 ### Example Endpoint Protection
 
 ```typescript
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(UserPermissionsGuard)
 @Post()
-@Roles(ADMIN, MANAGER)
 @Permissions(USERS_CREATE)
 create(@Body() createUserDto: CreateUserDto) {
   return this.usersService.create(createUserDto);

@@ -24,7 +24,6 @@ export class LoggingInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
     const { method, url } = request;
 
-    // Não registrar logs dos endpoints de autenticação (eles têm seu próprio sistema de logs)
     if (
       url.includes('/authentication/sign-in') ||
       url.includes('/authentication/logout') ||
@@ -33,33 +32,29 @@ export class LoggingInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    // Extrair userId do token JWT ou do bypass
     let userId: string | undefined;
     const bypassHeader = request.headers['x-bypass-auth'] as string | undefined;
     const secretBypass = process.env.SECRET_BYPASS;
 
-    // Se foi usado secret_bypass, deixar vazio (não registrar userId)
     if (secretBypass && bypassHeader === secretBypass) {
       userId = undefined;
+    } else if (request.user?.id) {
+      userId = request.user.id as string;
     } else if (request.user?.sub) {
       userId = request.user.sub as string;
     }
 
-    // Capturar o timestamp da requisição
     const actionDate = new Date();
 
-    // Extrair módulo da rota
     const module = this.extractModuleFromUrl(url);
     const friendlyAction = this.getActionFromMethod(method);
 
-    // Capturar e formatar parâmetros
     const parameters = this.extractAndFormatParameters(request);
 
     return next.handle().pipe(
       tap(() => {
         const statusCode = response.statusCode;
 
-        // Registrar apenas para operações de escrita e operações críticas
         if (this.shouldLog(method, statusCode)) {
           try {
             void this.logsService.create({
@@ -82,7 +77,6 @@ export class LoggingInterceptor implements NestInterceptor {
       catchError((error: unknown) => {
         const resultMessage = this.getResultFromError(error);
 
-        // Registrar erros
         try {
           void this.logsService.create({
             module,
@@ -106,26 +100,19 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   private extractModuleFromUrl(url: string): string {
-    // Remove query string se existir
     const cleanUrl = url.split('?')[0];
 
-    // Divide por / e filtra segmentos vazios
-    // ex: /api/v1/customers/123 -> ['api', 'v1', 'customers', '123']
     const segments = cleanUrl
       .split('/')
       .filter((segment) => segment.length > 0);
 
     if (segments.length > 0) {
-      // Se começa com 'api', pula para v1 e depois o módulo
       if (segments[0] === 'api') {
-        // Se tem v1 no segundo, retorna o terceiro segmento (customers, users, etc)
         if (segments[1] === 'v1' && segments.length > 2) {
           return segments[2];
         }
-        // Senão, retorna o segundo (fallback)
         return segments.length > 1 ? segments[1] : 'unknown';
       }
-      // Caso contrário, retorna o primeiro segmento
       return segments[0];
     }
 
@@ -145,12 +132,10 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   private shouldLog(method: string, statusCode: number): boolean {
-    // Registrar POST, PUT, DELETE e erros
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
       return true;
     }
 
-    // Registrar GETs com erro
     if (statusCode >= 400) {
       return true;
     }
@@ -207,7 +192,6 @@ export class LoggingInterceptor implements NestInterceptor {
     const result: Record<string, unknown> = {};
 
     try {
-      // Capturar query parameters
       if (request.query && typeof request.query === 'object') {
         for (const [key, value] of Object.entries(request.query)) {
           if (value !== undefined) {
@@ -216,19 +200,16 @@ export class LoggingInterceptor implements NestInterceptor {
         }
       }
 
-      // Capturar body parameters (para POST, PUT, PATCH)
       if (request.body && typeof request.body === 'object') {
         for (const [key, value] of Object.entries(
           request.body as Record<string, unknown>,
         )) {
-          // Não registrar senhas
           if (!key.toLowerCase().includes('password') && value !== undefined) {
             result[key] = value;
           }
         }
       }
 
-      // Capturar route parameters
       if (request.params && typeof request.params === 'object') {
         for (const [key, value] of Object.entries(request.params)) {
           if (value !== undefined) {

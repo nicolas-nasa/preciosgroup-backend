@@ -19,18 +19,24 @@ export class OrdersService {
     private readonly customersService: CustomersService,
   ) {}
 
-  async create(createOrderDto: Partial<OrderEntity>): Promise<OrderEntity> {
+  async create(
+    createOrderDto: Partial<OrderEntity> & { customerId?: string },
+  ): Promise<OrderEntity> {
     try {
       if (!createOrderDto.status) {
         throw new BadRequestException('Status is required');
       }
 
-      // Validate if customer exists
-      if (createOrderDto.customer && createOrderDto.customer.id) {
-        await this.customersService.findById(createOrderDto.customer.id);
+      if (!createOrderDto.customerId) {
+        throw new BadRequestException(
+          'Customer is required to create an order',
+        );
       }
 
+      const customer = await this.customersService.findById(createOrderDto.customerId);
+
       const order = this.ordersRepository.create(createOrderDto);
+      order.customer = customer;
       const savedOrder = await this.ordersRepository.save(order);
 
       this.logger.log(`Order created with id: ${savedOrder.id}`);
@@ -93,7 +99,6 @@ export class OrdersService {
     limit: number = 20,
   ): Promise<{ data: OrderEntity[]; total: number }> {
     try {
-      // Validate if customer exists
       await this.customersService.findById(customerId);
 
       const [data, total] = await this.ordersRepository.findAndCount({

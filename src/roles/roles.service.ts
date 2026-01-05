@@ -10,12 +10,14 @@ import { Permission } from '../permissions/permissions.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { PermissionsService } from '../permissions/permissions.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class RolesService {
   constructor(
     @InjectRepository(Role)
     private readonly rolesRepository: Repository<Role>,
+    private readonly usersService: UsersService,
     private readonly permissionsService: PermissionsService,
   ) {}
 
@@ -39,30 +41,54 @@ export class RolesService {
   }
 
   async findAll(): Promise<Role[]> {
-    return await this.rolesRepository.find({
-      relations: ['permissions'],
-    });
+    return await this.rolesRepository.find();
   }
 
   async findOne(id: string): Promise<Role | null> {
+    return await this.rolesRepository.findOne({
+      where: { id },
+    });
+  }
+
+  async findOneWithPermissions(id: string): Promise<Role | null> {
     return await this.rolesRepository.findOne({
       where: { id },
       relations: ['permissions'],
     });
   }
 
+  async getPermissionsByRole(id: string): Promise<Permission[]> {
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+      relations: ['permissions'],
+    });
+    if (!role) {
+      throw new NotFoundException(`Role with id ${id} not found`);
+    }
+    return role.permissions || [];
+  }
+
   async findByKey(key: string): Promise<Role | null> {
     return await this.rolesRepository.findOne({
       where: { key },
-      relations: ['permissions'],
     });
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
-    const role = await this.findOne(id);
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+      relations: ['permissions'],
+    });
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
+
+    Object.assign(role, {
+      name: updateRoleDto.name,
+      description: updateRoleDto.description,
+      key: updateRoleDto.key,
+      isActive: updateRoleDto.isActive,
+    });
 
     if (updateRoleDto.permissionIds) {
       const permissions = (
@@ -72,23 +98,17 @@ export class RolesService {
           ),
         )
       ).filter((p): p is any => p !== null);
-      await this.rolesRepository.update(id, {
-        ...updateRoleDto,
-        permissions,
-      });
-    } else {
-      await this.rolesRepository.update(id, updateRoleDto);
+      role.permissions = permissions;
     }
 
-    const updated = await this.findOne(id);
-    if (!updated) {
-      throw new NotFoundException(`Role with id ${id} not found`);
-    }
-    return updated;
+    return await this.rolesRepository.save(role);
   }
 
   async addPermission(roleId: string, permissionId: string): Promise<Role> {
-    const role = await this.findOne(roleId);
+    const role = await this.rolesRepository.findOne({
+      where: { id: roleId },
+      relations: ['permissions'],
+    });
     if (!role) {
       throw new NotFoundException(`Role with id ${roleId} not found`);
     }
@@ -98,6 +118,10 @@ export class RolesService {
       throw new NotFoundException(
         `Permission with id ${permissionId} not found`,
       );
+    }
+
+    if (!role.permissions) {
+      role.permissions = [];
     }
 
     if (role.permissions.find((p: Permission) => p.id === permissionId)) {
@@ -111,9 +135,16 @@ export class RolesService {
   }
 
   async removePermission(roleId: string, permissionId: string): Promise<Role> {
-    const role = await this.findOne(roleId);
+    const role = await this.rolesRepository.findOne({
+      where: { id: roleId },
+      relations: ['permissions'],
+    });
     if (!role) {
       throw new NotFoundException(`Role with id ${roleId} not found`);
+    }
+
+    if (!role.permissions) {
+      role.permissions = [];
     }
 
     if (!role.permissions.find((p: Permission) => p.id === permissionId)) {
@@ -129,6 +160,7 @@ export class RolesService {
   }
 
   async remove(id: string): Promise<void> {
+    await this.usersService.removeRoleFromAllUsers(id);
     await this.rolesRepository.delete(id);
   }
 

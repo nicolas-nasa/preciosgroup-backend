@@ -33,7 +33,6 @@ export class Role {
   updatedAt: Date;
 
   @ManyToMany(() => Permission, (permission: Permission) => permission.roles, {
-    eager: true,
     cascade: true,
   })
   @JoinTable({
@@ -41,5 +40,5 @@ export class Role {
     joinColumn: { name: 'roleId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'permissionId', referencedColumnName: 'id' },
   })
-  permissions: Permission[];
+  permissions?: Permission[];
 }

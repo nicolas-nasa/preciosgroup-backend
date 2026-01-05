@@ -3,10 +3,8 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { VersioningType } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import { CombinedAuthGuard } from './authentication/guards/combined-auth.guard';
-import { JwtService } from '@nestjs/jwt';
-import { Reflector } from '@nestjs/core';
 import { SeedService } from './seed/seed.service';
+import { SanitizeResponseInterceptor } from './common/interceptors/sanitize-response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,13 +12,17 @@ async function bootstrap() {
   const seedService = app.get(SeedService);
   await seedService.seedDatabase();
 
+  app.use(cookieParser());
+
   app.enableCors({
     origin: 'http://localhost:3000',
+    credentials: true,
     withCredentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Bypass-Auth'],
-    credentials: true,
   });
+
+  app.useGlobalInterceptors(new SanitizeResponseInterceptor());
 
   app.setGlobalPrefix('api');
 
@@ -28,12 +30,6 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
-
-  app.use(cookieParser());
-
-  const jwtService = app.get(JwtService);
-  const reflector = app.get(Reflector);
-  app.useGlobalGuards(new CombinedAuthGuard(jwtService, reflector));
 
   const config = new DocumentBuilder()
     .setTitle('Precios Group API')
@@ -52,6 +48,12 @@ async function bootstrap() {
       },
       'jwt-auth',
     )
+    .addCookieAuth('access_token', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'access_token',
+      description: 'JWT token stored in httpOnly cookie after login',
+    })
     .addApiKey(
       {
         type: 'apiKey',
@@ -71,9 +73,44 @@ async function bootstrap() {
     .addTag('Logs', 'System logs (requires authentication)')
     .addTag('Permissions', 'Permission management (admin only)')
     .addTag('Roles', 'Role management (admin only)')
+    .addTag(
+      'Type-of-Processes',
+      'Type of processes management (requires authentication)',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, documentFactory);
+  SwaggerModule.setup('api/docs', app, documentFactory, {
+    swaggerOptions: {
+      layout: 'BaseLayout',
+      swaggerUI: {
+        defaultModelsExpandDepth: 1,
+      },
+    },
+    customCss: `
+      .topbar {
+        display: flex !important;
+        align-items: center !important;
+        padding: 10px 20px !important;
+      }
+      .topbar-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+      .topbar h1 {
+        margin: 0 !important;
+        flex: 1 !important;
+      }
+      .auth-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+      }
+      .authorize {
+        margin-left: auto !important;
+      }
+    `,
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

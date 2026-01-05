@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
 import { FileEntity } from './files.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
 import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
 
 describe('FilesController', () => {
@@ -38,17 +37,11 @@ describe('FilesController', () => {
           },
         },
         {
-          provide: 'RolesGuard',
-          useValue: { canActivate: () => true },
-        },
-        {
           provide: 'PermissionsGuard',
           useValue: { canActivate: () => true },
         },
       ],
     })
-      .overrideGuard(RolesGuard)
-      .useValue({ canActivate: () => true })
       .overrideGuard(PermissionsGuard)
       .useValue({ canActivate: () => true })
       .compile();

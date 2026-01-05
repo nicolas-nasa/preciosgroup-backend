@@ -22,28 +22,23 @@ import {
 } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CustomerEntity } from './customers.entity';
-import { RolesGuard } from 'src/authentication/guards/roles.guard';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
-import { Roles } from 'src/authentication/decorators/roles.decorator';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 import { Permissions } from 'src/authentication/decorators/permissions.decorator';
-import { Role } from 'src/authentication/enums/role.enum';
 import { Permission } from 'src/authentication/enums/permission.enum';
 
 @ApiTags('Customers')
 @ApiBearerAuth('jwt-auth')
-@ApiBearerAuth('bypass-auth')
 @Controller('customers')
-@UseGuards(RolesGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.CUSTOMERS_CREATE)
   @ApiOperation({
     summary: 'Create new customer',
-    description: 'Create a new customer (Admin/Manager only)',
+    description: 'Create a new customer',
   })
   @ApiBody({
     description: 'Customer creation data',
@@ -64,15 +59,17 @@ export class CustomersController {
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', format: 'uuid' },
         companyName: { type: 'string' },
         cnpj: { type: 'string' },
-        representantName: { type: 'string' },
-        representantContact: { type: 'string' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        deletedAt: { type: 'string', nullable: true },
-        deletedBy: { type: 'string', nullable: true },
+        representantName: { type: 'string', nullable: true },
+        representantContact: { type: 'string', nullable: true },
+        isActive: { type: 'boolean' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedBy: { type: 'string', format: 'uuid', nullable: true },
+        deletedBy: { type: 'string', format: 'uuid', nullable: true },
       },
     },
   })
@@ -118,15 +115,17 @@ export class CustomersController {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'string', format: 'uuid' },
               companyName: { type: 'string' },
               cnpj: { type: 'string' },
-              representantName: { type: 'string' },
-              representantContact: { type: 'string' },
-              createdAt: { type: 'string' },
-              updatedAt: { type: 'string' },
-              deletedAt: { type: 'string', nullable: true },
-              deletedBy: { type: 'string', nullable: true },
+              representantName: { type: 'string', nullable: true },
+              representantContact: { type: 'string', nullable: true },
+              isActive: { type: 'boolean' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              deletedAt: { type: 'string', format: 'date-time', nullable: true },
+              updatedBy: { type: 'string', format: 'uuid', nullable: true },
+              deletedBy: { type: 'string', format: 'uuid', nullable: true },
             },
           },
         },
@@ -223,11 +222,10 @@ export class CustomersController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.CUSTOMERS_UPDATE)
   @ApiOperation({
     summary: 'Update customer',
-    description: 'Update customer information (Admin/Manager only)',
+    description: 'Update customer information',
   })
   @ApiParam({
     name: 'id',
@@ -281,11 +279,10 @@ export class CustomersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN)
   @Permissions(Permission.CUSTOMERS_DELETE)
   @ApiOperation({
     summary: 'Hard delete customer',
-    description: 'Permanently delete a customer (Admin only)',
+    description: 'Permanently delete a customer',
   })
   @ApiResponse({
     status: 204,
@@ -297,11 +294,10 @@ export class CustomersController {
 
   @Delete(':id/soft')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.ADMIN, Role.MANAGER)
   @Permissions(Permission.CUSTOMERS_DELETE)
   @ApiOperation({
     summary: 'Soft delete customer',
-    description: 'Soft delete a customer (Admin/Manager only)',
+    description: 'Soft delete a customer',
   })
   @ApiResponse({
     status: 204,
