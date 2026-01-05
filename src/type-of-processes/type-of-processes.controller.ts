@@ -33,7 +33,6 @@ import { TypeOfProcessEntity } from './type-of-processes.entity';
 
 @ApiTags('Type-of-Processes')
 @ApiBearerAuth('jwt-auth')
-
 @Controller('type-of-processes')
 @UseGuards(PermissionsGuard)
 export class TypeOfProcessesController {
@@ -78,7 +77,7 @@ export class TypeOfProcessesController {
   }
 
   @Get()
-  @Permissions(Permission.TYPE_OF_PROCESSES_READ)
+  @Permissions(Permission.PROCESSES_READ)
   @ApiOperation({
     summary: 'Get all types of processes',
     description:
@@ -108,7 +107,7 @@ export class TypeOfProcessesController {
   }
 
   @Get(':id')
-  @Permissions(Permission.TYPE_OF_PROCESSES_READ)
+  @Permissions(Permission.PROCESSES_READ)
   @ApiOperation({
     summary: 'Get a type of process by ID',
     description: 'Retrieve a specific type of process by its unique identifier',

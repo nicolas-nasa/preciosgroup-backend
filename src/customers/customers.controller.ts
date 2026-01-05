@@ -146,7 +146,7 @@ export class CustomersController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @Permissions(Permission.CUSTOMERS_READ)
+  @Permissions(Permission.ORDERS_READ)
   @ApiOperation({
     summary: 'Get customer by ID',
     description: 'Retrieve a specific customer',

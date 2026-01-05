@@ -94,7 +94,7 @@ export class RolesController {
   }
 
   @Get(':id/permissions')
-  @Permissions(Permission.ROLES_READ)
+  @Permissions()
   @ApiOperation({
     summary: 'Get permissions for a specific role',
     description:
@@ -131,7 +131,6 @@ export class RolesController {
   }
 
   @Get(':id')
-  @Permissions(Permission.ROLES_READ)
   @ApiOperation({
     summary: 'Get a specific role',
     description:
