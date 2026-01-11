@@ -340,6 +340,158 @@ export class OrdersController {
   ): Promise<OrderEntity> {
     return this.ordersService.update(id, updateOrderDto);
   }
+  @Put(':id/status/arrived')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(Permission.ORDERS_UPDATE_STATUS_ARRIVED)
+  @ApiOperation({
+    summary: 'Update order status to arrived',
+    description: 'Update order status to arrived',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        deletedAt: { type: 'string', nullable: true },
+        deletedBy: { type: 'string', nullable: true },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order not found',
+  })
+  async updateStatusToArrived(@Param('id') id: string): Promise<OrderEntity> {
+    return this.ordersService.update(id, { status: 'ARRIVED' });
+  }
+  @Put(':id/status/awaiting')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(Permission.ORDERS_UPDATE_STATUS_AWAITING)
+  @ApiOperation({
+    summary: 'Update order status to awaiting',
+    description: 'Update order status to awaiting',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        deletedAt: { type: 'string', nullable: true },
+        deletedBy: { type: 'string', nullable: true },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order not found',
+  })
+  async updateStatusToAwaiting(@Param('id') id: string): Promise<OrderEntity> {
+    return this.ordersService.update(id, { status: 'AWAITING' });
+  }
+  @Put(':id/status/liberated')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(Permission.ORDERS_UPDATE_STATUS_LIBERATED)
+  @ApiOperation({
+    summary: 'Update order status to liberated',
+    description: 'Update order status to liberated',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        deletedAt: { type: 'string', nullable: true },
+        deletedBy: { type: 'string', nullable: true },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order not found',
+  })
+  async updateStatusToLiberated(@Param('id') id: string): Promise<OrderEntity> {
+    return this.ordersService.update(id, { status: 'LIBERATED' });
+  }
+  @Put(':id/status/finished')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(Permission.ORDERS_UPDATE_STATUS_FINISHED)
+  @ApiOperation({
+    summary: 'Update order status to finished',
+    description: 'Update order status to finished',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        deletedAt: { type: 'string', nullable: true },
+        deletedBy: { type: 'string', nullable: true },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order not found',
+  })
+  async updateStatusToFinished(@Param('id') id: string): Promise<OrderEntity> {
+    return this.ordersService.update(id, { status: 'FINISHED' });
+  }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

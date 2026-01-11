@@ -104,7 +104,26 @@ export class SeedService {
         description: 'Permission to delete orders',
         key: PermissionEnum.ORDERS_DELETE,
       },
-
+      {
+        name: 'Update Status Orders to arrived',
+        description: 'Permission to update order status arrived',
+        key: PermissionEnum.ORDERS_UPDATE_STATUS_ARRIVED,
+      },
+      {
+        name: 'Update Status Orders to awaiting',
+        description: 'Permission to update order status awaiting',
+        key: PermissionEnum.ORDERS_UPDATE_STATUS_AWAITING,
+      },
+      {
+        name: 'Update Status Orders to liberated',
+        description: 'Permission to update order status liberated',
+        key: PermissionEnum.ORDERS_UPDATE_STATUS_LIBERATED,
+      },
+      {
+        name: 'Update Status Orders to finished',
+        description: 'Permission to update order status finished',
+        key: PermissionEnum.ORDERS_UPDATE_STATUS_FINISHED,
+      },
       {
         name: 'Create Processes',
         description: 'Permission to create new processes',

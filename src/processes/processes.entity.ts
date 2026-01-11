@@ -15,6 +15,9 @@ export class ProcessEntity extends BaseEntity {
   @Column({ name: 'status', type: 'varchar' })
   status: string;
 
+  @Column({ name: 'description', type: 'text', nullable: true })
+  description?: string;
+
   @Column({ name: 'orderId', type: 'uuid', nullable: true })
   orderId?: string;
 

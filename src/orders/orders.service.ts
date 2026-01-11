@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { OrderEntity } from './orders.entity';
 import { CustomersService } from 'src/customers/customers.service';
 
@@ -33,7 +33,9 @@ export class OrdersService {
         );
       }
 
-      const customer = await this.customersService.findById(createOrderDto.customerId);
+      const customer = await this.customersService.findById(
+        createOrderDto.customerId,
+      );
 
       const order = this.ordersRepository.create(createOrderDto);
       order.customer = customer;
@@ -124,7 +126,15 @@ export class OrdersService {
   ): Promise<{ data: OrderEntity[]; total: number }> {
     try {
       const [data, total] = await this.ordersRepository.findAndCount({
-        where: { status },
+        where: {
+          status,
+          ...(status === 'finished' && {
+            updatedAt: Between(
+              new Date(Date.now() - 24 * 60 * 60 * 1000),
+              new Date(),
+            ),
+          }),
+        },
         skip: (page - 1) * limit,
         take: limit,
         relations: ['customer', 'processes'],

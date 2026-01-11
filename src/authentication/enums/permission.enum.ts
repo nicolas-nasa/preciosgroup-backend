@@ -15,6 +15,10 @@ export enum Permission {
   ORDERS_READ = 'orders:read',
   ORDERS_UPDATE = 'orders:update',
   ORDERS_DELETE = 'orders:delete',
+  ORDERS_UPDATE_STATUS_ARRIVED = 'orders:update:status:arrived',
+  ORDERS_UPDATE_STATUS_AWAITING = 'orders:update:status:awaiting',
+  ORDERS_UPDATE_STATUS_LIBERATED = 'orders:update:status:liberated',
+  ORDERS_UPDATE_STATUS_FINISHED = 'orders:update:status:finished',
 
   PROCESSES_CREATE = 'processes:create',
   PROCESSES_READ = 'processes:read',
