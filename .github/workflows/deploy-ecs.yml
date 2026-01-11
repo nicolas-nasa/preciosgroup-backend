@@ -31,11 +31,13 @@ jobs:
         with:
           version: 8
 
-      - name: Set up Node.js
+      - name: Setup pnpm store
+        id: pnpm-cache
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -50,7 +52,7 @@ jobs:
 
       - name: Build application
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install
           pnpm run build
 
       - name: Build Docker image
