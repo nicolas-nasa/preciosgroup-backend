@@ -1,4 +1,5 @@
-import { Controller, Get, HttpCode, HttpStatus, Response } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
+import type { Response, Request } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './authentication/decorators/public.decorator';
@@ -26,8 +27,8 @@ export class AppController {
       },
     },
   })
-  getHealthStatus(@Response() response: any): void {
-    const result = this.appService.healthStatus();
-    response.status(200).send(result);
+  getHealthStatus(@Res() response: Response): void {
+    // const result = this.appService.healthStatus();
+    response.status(200);
   }
 }
