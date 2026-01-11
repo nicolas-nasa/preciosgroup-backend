@@ -119,13 +119,22 @@ jobs:
           aws ecs describe-task-definition \
             --task-definition ${{ env.ECS_TASK_DEFINITION }} \
             --region ${{ env.AWS_REGION }} \
-            --query 'taskDefinition' > task-definition.json
+            --query 'taskDefinition' > task-definition-from-aws.json
+
+      - name: Register task definition from repository
+        run: |
+          echo "=== Registering task definition from repository ==="
+          aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --region ${{ env.AWS_REGION }}
+          echo ""
+          echo "✓ Task definition registered successfully"
 
       - name: Update task definition with new image
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: task-definition-from-aws.json
           container-name: ${{ env.ECR_REPOSITORY }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           environment-variables: |
