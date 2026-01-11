@@ -88,16 +88,31 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "=== Docker Build Configuration ==="
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          echo "ECR_REPOSITORY: $ECR_REPOSITORY"
+          echo "IMAGE_TAG: $IMAGE_TAG"
+          echo ""
+          echo "=== Building Docker image ==="
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo ""
+          echo "=== Verifying image build ==="
+          docker images | grep $ECR_REPOSITORY
 
       - name: Push Docker image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "=== Pushing image with tag: $IMAGE_TAG ==="
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo ""
+          echo "=== Pushing image with tag: latest ==="
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo ""
+          echo "=== Verifying images in ECR ==="
+          aws ecr describe-images --repository-name $ECR_REPOSITORY --region ${{ env.AWS_REGION }} || echo "Unable to list ECR images"
 
       - name: Download task definition
         run: |
@@ -123,6 +138,14 @@ jobs:
             DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}
             SECRET_KEY=${{ secrets.SECRET_KEY }}
             DATABASE_TYPE=${{ secrets.DATABASE_TYPE }}
+
+      - name: Verify task definition
+        run: |
+          echo "=== Updated Task Definition ==="
+          cat ${{ steps.task-def.outputs.task-definition }}
+          echo ""
+          echo "=== Task Definition File Path ==="
+          echo "File: ${{ steps.task-def.outputs.task-definition }}"
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
