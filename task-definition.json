@@ -8,7 +8,7 @@
   "memory": "512",
   "containerDefinitions": [
     {
-      "name": "precious-group-backend-task",
+      "name": "precious-group-backend",
       "image": "precious-group-backend:latest",
       "essential": true,
       "portMappings": [
