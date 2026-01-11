@@ -83,12 +83,15 @@ jobs:
           container-name: ${{ env.ECR_REPOSITORY }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           environment-variables: |
+            PORT=${{ secrets.PORT }}
+            MODE=${{ secrets.MODE }}
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            DATABASE_DATABASE=${{ secrets.DATABASE_DATABASE }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            DATABASE_TYPE=${{ secrets.DATABASE_TYPE }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1

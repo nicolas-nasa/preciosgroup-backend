@@ -10,7 +10,6 @@ class TEnviroments {
   MODE: 'DEV' | 'PRD' | 'TST';
   DATABASE_TYPE: 'postgres' | 'mysql';
   SECRET_KEY: string;
-  SECRET_BYPASS?: string;
 }
 
 enum EEnviroments {
@@ -23,7 +22,6 @@ enum EEnviroments {
   MODE = 'MODE',
   DATABASE_TYPE = 'DATABASE_TYPE',
   SECRET_KEY = 'SECRET_KEY',
-  SECRET_BYPASS = 'SECRET_BYPASS',
 }
 
 const toNumber: Array<string> = [EEnviroments.DATABASE_PORT, EEnviroments.PORT];
