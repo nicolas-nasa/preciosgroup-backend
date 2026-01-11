@@ -53,7 +53,7 @@ jobs:
       - name: Build application
         run: |
           pnpm install
-          pnpm run build
+          pnpm build
 
       - name: Build Docker image
         env:
