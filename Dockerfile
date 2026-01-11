@@ -43,7 +43,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/v1/status', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD "curl -f http://localhost:3000/api/v1/status || exit 1"
 
 # Start the application
 CMD ["node", "dist/src/main"]
