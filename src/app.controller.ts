@@ -29,6 +29,6 @@ export class AppController {
   })
   getHealthStatus(@Res() response: Response): void {
     // const result = this.appService.healthStatus();
-    response.status(200);
+    response.sendStatus(200);
   }
 }
