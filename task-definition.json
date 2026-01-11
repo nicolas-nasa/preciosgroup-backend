@@ -43,5 +43,6 @@
         "startPeriod": 5
       }
     }
-  ]
+  ],
+  "executionRoleArn": "arn:aws:iam::711022722666:role/ecsTaskExecutionRole"
 }
