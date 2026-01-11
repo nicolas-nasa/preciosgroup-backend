@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Response } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './authentication/decorators/public.decorator';
@@ -10,7 +10,6 @@ export class AppController {
 
   @Get('status')
   @Public()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Health check',
     description: 'Check API health status',
@@ -27,7 +26,8 @@ export class AppController {
       },
     },
   })
-  getHealthStatus(): string {
-    return this.appService.healthStatus();
+  getHealthStatus(@Response() response: any): void {
+    const result = this.appService.healthStatus();
+    response.status(200).send(result);
   }
 }
