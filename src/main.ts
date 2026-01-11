@@ -15,11 +15,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-    withCredentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Bypass-Auth'],
+    origin: '*',
   });
 
   app.useGlobalInterceptors(new SanitizeResponseInterceptor());

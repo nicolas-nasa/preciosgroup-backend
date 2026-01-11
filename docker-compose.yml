@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: preciosgroup-db
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-password}
+      POSTGRES_DB: ${DATABASE_DATABASE:-postgres}
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preciosgroup-network
+
+  app:
+    build: .
+    container_name: preciosgroup-app
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-password}
+      DATABASE_DATABASE: ${DATABASE_DATABASE:-postgres}
+      PORT: ${PORT:-3001}
+      DATABASE_TYPE: ${DATABASE_TYPE:-postgres}
+      MODE: ${MODE:-DEV}
+      SECRET_BYPASS: ${SECRET_BYPASS:-TESTE}
+      SECRET_KEY: ${SECRET_KEY:-123sasew}
+      DEFAULT_USER_FULL_NAME: ${DEFAULT_USER_FULL_NAME:-System Administrator}
+      DEFAULT_USER_CPF: ${DEFAULT_USER_CPF:-11144477735}
+      DEFAULT_USER_EMAIL: ${DEFAULT_USER_EMAIL:-admin@system.com}
+      DEFAULT_USER_PASSWORD: ${DEFAULT_USER_PASSWORD:-Admin@123456}
+      DEFAULT_USER_CONTACT: ${DEFAULT_USER_CONTACT:-1199999999}
+    ports:
+      - "${PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - preciosgroup-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  preciosgroup-network:
+    driver: bridge

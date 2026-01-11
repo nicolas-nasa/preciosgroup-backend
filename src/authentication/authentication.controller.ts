@@ -70,19 +70,20 @@ export class AuthenticationController {
 
     response.cookie('access_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: true,
       maxAge: 86400000,
     });
     response.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: true,
       maxAge: 2592000000,
     });
     response.status(200).send({
       message: result.message,
       access_token: result.access_token,
+      refresh_token: result.refresh_token,
     });
   }
 
@@ -129,20 +130,21 @@ export class AuthenticationController {
     const result = await this.authenticationService.refreshToken(token);
     response.cookie('access_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      secure: true,
+      sameSite: true,
       maxAge: 2592000000,
     });
     response.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      secure: true,
+      sameSite: true,
       maxAge: 2592000000,
     });
 
     response.status(200).send({
       message: result.message,
       access_token: result.access_token,
+      refresh_token: result.refresh_token,
     });
   }
 
