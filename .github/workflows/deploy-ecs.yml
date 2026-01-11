@@ -26,6 +26,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify files structure
+        run: |
+          echo "=== Checking repository structure ==="
+          ls -la src/
+          echo ""
+          echo "=== Checking logs directory ==="
+          ls -la src/logs/
+          echo ""
+          echo "=== Checking logs enums ==="
+          ls -la src/logs/enums/
+          echo ""
+          echo "=== File: logs.module.ts ==="
+          head -5 src/logs/logs.module.ts
+          echo ""
+          echo "=== File: action.enum.ts ==="
+          head -5 src/logs/enums/action.enum.ts
+
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -53,6 +70,17 @@ jobs:
       - name: Build application
         run: |
           pnpm install
+          echo ""
+          echo "=== Verifying dependencies installation ==="
+          test -d node_modules && echo "✓ node_modules directory exists" || echo "✗ node_modules directory missing"
+          test -f pnpm-lock.yaml && echo "✓ pnpm-lock.yaml exists" || echo "✗ pnpm-lock.yaml missing"
+          echo ""
+          echo "=== Verifying source files before build ==="
+          test -f src/logs/logs.module.ts && echo "✓ src/logs/logs.module.ts exists" || echo "✗ src/logs/logs.module.ts missing"
+          test -f src/logs/logs.service.ts && echo "✓ src/logs/logs.service.ts exists" || echo "✗ src/logs/logs.service.ts missing"
+          test -f src/logs/enums/action.enum.ts && echo "✓ src/logs/enums/action.enum.ts exists" || echo "✗ src/logs/enums/action.enum.ts missing"
+          echo ""
+          echo "=== Running build ==="
           pnpm build
 
       - name: Build Docker image
