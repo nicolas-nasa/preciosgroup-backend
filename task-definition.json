@@ -1,5 +1,5 @@
 {
-  "family": "precious-group-backend",
+  "family": "precious-group-backend-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
@@ -8,7 +8,7 @@
   "memory": "512",
   "containerDefinitions": [
     {
-      "name": "precious-group-backend",
+      "name": "precious-group-backend-task",
       "image": "precious-group-backend:latest",
       "essential": true,
       "portMappings": [
