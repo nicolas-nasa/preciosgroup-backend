@@ -31,16 +31,6 @@
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
-      },
-      "healthCheck": {
-        "command": [
-            "CMD-SHELL",
-            "curl -f http://localhost:3000/api/v1/status || exit 1"
-        ],
-        "interval": 30,
-        "timeout": 3,
-        "retries": 3,
-        "startPeriod": 5
       }
     }
   ],

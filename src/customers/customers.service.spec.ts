@@ -12,7 +12,7 @@ describe('CustomersService', () => {
   const mockCustomerEntity: CustomerEntity = {
     id: '1',
     companyName: 'Test Company',
-    cnpj: '12.345.678/0001-90',
+    cnpj: '11.222.333/0001-81',
     representantName: 'Test Representant',
     representantContact: '11999999999',
     orders: [],
@@ -53,7 +53,7 @@ describe('CustomersService', () => {
     it('should create a customer', async () => {
       const createCustomerDto = {
         companyName: 'Test Company',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '11.222.333/0001-81',
         representantName: 'Test Representant',
       };
 
@@ -128,15 +128,15 @@ describe('CustomersService', () => {
     });
   });
 
-  describe('findByCnpj', () => {
-    it('should return a customer by CNPJ', async () => {
+  describe('findByCnpjOrCpf', () => {
+    it('should return a customer by CNPJ or CPF', async () => {
       jest.spyOn(repository, 'findOne').mockResolvedValue(mockCustomerEntity);
 
-      const result = await service.findByCnpj('12.345.678/0001-90');
+      const result = await service.findByCnpjOrCpf('11.222.333/0001-81');
 
       expect(result).toEqual(mockCustomerEntity);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { cnpj: '12.345.678/0001-90' },
+        where: { cnpj: '11.222.333/0001-81' },
         relations: ['orders'],
       });
     });
@@ -144,7 +144,7 @@ describe('CustomersService', () => {
     it('should throw NotFoundException when customer not found', async () => {
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findByCnpj('99.999.999/9999-99')).rejects.toThrow(
+      await expect(service.findByCnpjOrCpf('99.999.999/9999-99')).rejects.toThrow(
         NotFoundException,
       );
     });

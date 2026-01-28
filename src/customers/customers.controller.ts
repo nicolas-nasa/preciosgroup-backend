@@ -46,7 +46,10 @@ export class CustomersController {
       type: 'object',
       properties: {
         companyName: { type: 'string' },
-        cnpj: { type: 'string' },
+        cnpj: {
+          type: 'string',
+          description: 'CPF (11 digits) or CNPJ (14 digits)',
+        },
         representantName: { type: 'string' },
         representantContact: { type: 'string' },
       },
@@ -123,7 +126,11 @@ export class CustomersController {
               isActive: { type: 'boolean' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
-              deletedAt: { type: 'string', format: 'date-time', nullable: true },
+              deletedAt: {
+                type: 'string',
+                format: 'date-time',
+                nullable: true,
+              },
               updatedBy: { type: 'string', format: 'uuid', nullable: true },
               deletedBy: { type: 'string', format: 'uuid', nullable: true },
             },
@@ -186,12 +193,12 @@ export class CustomersController {
   @HttpCode(HttpStatus.OK)
   @Permissions(Permission.CUSTOMERS_READ)
   @ApiOperation({
-    summary: 'Get customer by CNPJ',
-    description: 'Retrieve a customer by CNPJ',
+    summary: 'Get customer by CPF or CNPJ',
+    description: 'Retrieve a customer by CPF (11 digits) or CNPJ (14 digits)',
   })
   @ApiParam({
     name: 'cnpj',
-    description: 'Customer CNPJ',
+    description: 'Customer CPF (11 digits) or CNPJ (14 digits)',
     example: '12345678000195',
   })
   @ApiResponse({
@@ -216,8 +223,8 @@ export class CustomersController {
     status: 404,
     description: 'Customer not found',
   })
-  async findByCnpj(@Param('cnpj') cnpj: string): Promise<CustomerEntity> {
-    return this.customersService.findByCnpj(cnpj);
+  async findByCnpjOrCpf(@Param('cnpj') cnpj: string): Promise<CustomerEntity> {
+    return this.customersService.findByCnpjOrCpf(cnpj);
   }
 
   @Put(':id')
@@ -238,7 +245,10 @@ export class CustomersController {
       type: 'object',
       properties: {
         companyName: { type: 'string' },
-        cnpj: { type: 'string' },
+        cnpj: {
+          type: 'string',
+          description: 'CPF (11 digits) or CNPJ (14 digits)',
+        },
         representantName: { type: 'string' },
         representantContact: { type: 'string' },
       },

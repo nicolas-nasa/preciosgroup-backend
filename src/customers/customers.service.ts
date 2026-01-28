@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerEntity } from './customers.entity';
+import { isValidCPFOrCNPJ } from 'src/utils/validation.utils';
 
 @Injectable()
 export class CustomersService {
@@ -22,7 +23,11 @@ export class CustomersService {
   ): Promise<CustomerEntity> {
     try {
       if (!createCustomerDto.companyName || !createCustomerDto.cnpj) {
-        throw new BadRequestException('Company name and CNPJ are required');
+        throw new BadRequestException('Company name and CPF/CNPJ are required');
+      }
+
+      if (!isValidCPFOrCNPJ(createCustomerDto.cnpj)) {
+        throw new BadRequestException('Invalid CPF or CNPJ format');
       }
 
       const existingCustomer = await this.customersRepository.findOne({
@@ -30,7 +35,7 @@ export class CustomersService {
       });
 
       if (existingCustomer) {
-        throw new BadRequestException('Customer with this CNPJ already exists');
+        throw new BadRequestException('Customer with this CPF/CNPJ already exists');
       }
 
       const customer = this.customersRepository.create(createCustomerDto);
@@ -90,7 +95,7 @@ export class CustomersService {
     }
   }
 
-  async findByCnpj(cnpj: string): Promise<CustomerEntity> {
+  async findByCnpjOrCpf(cnpj: string): Promise<CustomerEntity> {
     try {
       const customer = await this.customersRepository.findOne({
         where: { cnpj },
@@ -98,13 +103,13 @@ export class CustomersService {
       });
 
       if (!customer) {
-        throw new NotFoundException(`Customer with CNPJ ${cnpj} not found`);
+        throw new NotFoundException(`Customer with CPF/CNPJ ${cnpj} not found`);
       }
 
       return customer;
     } catch (error: unknown) {
       this.logger.error(
-        `Error finding customer by CNPJ: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Error finding customer by CPF/CNPJ: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
     }
@@ -118,12 +123,16 @@ export class CustomersService {
       const customer = await this.findById(id);
 
       if (updateCustomerDto.cnpj && updateCustomerDto.cnpj !== customer.cnpj) {
+        if (!isValidCPFOrCNPJ(updateCustomerDto.cnpj)) {
+          throw new BadRequestException('Invalid CPF or CNPJ format');
+        }
+
         const existingCnpj = await this.customersRepository.findOne({
           where: { cnpj: updateCustomerDto.cnpj },
         });
 
         if (existingCnpj) {
-          throw new BadRequestException('Customer with this CNPJ already exists');
+          throw new BadRequestException('Customer with this CPF/CNPJ already exists');
         }
       }
 

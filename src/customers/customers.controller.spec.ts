@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
 import { CustomerEntity } from './customers.entity';
-import { PermissionsGuard } from 'src/authentication/guards/permissions.guard';
+import { PermissionsGuard } from 'src/authentication/guards/user-permissions.guard';
 
 describe('CustomersController', () => {
   let controller: CustomersController;
@@ -11,7 +11,7 @@ describe('CustomersController', () => {
   const mockCustomerEntity: CustomerEntity = {
     id: '1',
     companyName: 'Test Company',
-    cnpj: '12.345.678/0001-90',
+    cnpj: '11.222.333/0001-81',
     representantName: 'Test Representant',
     representantContact: '11999999999',
     orders: [],
@@ -30,7 +30,7 @@ describe('CustomersController', () => {
             create: jest.fn(),
             findAll: jest.fn(),
             findById: jest.fn(),
-            findByCnpj: jest.fn(),
+            findByCnpjOrCpf: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
             softDelete: jest.fn(),
@@ -60,7 +60,7 @@ describe('CustomersController', () => {
 
       const result = await controller.create({
         companyName: 'Test Company',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '11.222.333/0001-81',
       });
 
       expect(result).toEqual(mockCustomerEntity);
@@ -91,14 +91,14 @@ describe('CustomersController', () => {
     });
   });
 
-  describe('findByCnpj', () => {
-    it('should return a customer by CNPJ', async () => {
-      jest.spyOn(service, 'findByCnpj').mockResolvedValue(mockCustomerEntity);
+  describe('findByCnpjOrCpf', () => {
+    it('should return a customer by CNPJ or CPF', async () => {
+      jest.spyOn(service, 'findByCnpjOrCpf').mockResolvedValue(mockCustomerEntity);
 
-      const result = await controller.findByCnpj('12.345.678/0001-90');
+      const result = await controller.findByCnpjOrCpf('11.222.333/0001-81');
 
       expect(result).toEqual(mockCustomerEntity);
-      expect(service.findByCnpj).toHaveBeenCalledWith('12.345.678/0001-90');
+      expect(service.findByCnpjOrCpf).toHaveBeenCalledWith('11.222.333/0001-81');
     });
   });
 
