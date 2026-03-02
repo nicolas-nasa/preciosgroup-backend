@@ -28,6 +28,9 @@ export class LogEntity extends BaseEntity {
   @Column({ name: 'parameters', type: 'jsonb', nullable: true })
   parameters?: Record<string, unknown>;
 
+  @Column({ name: 'error_data', type: 'jsonb', nullable: true })
+  errorData?: Record<string, unknown>;
+
   @ManyToOne(() => UserEntity, { onDelete: 'SET NULL', eager: true })
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;

@@ -10,6 +10,7 @@ import { tap, catchError } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { LogsService } from 'src/logs/logs.service';
 import { FriendlyActionEnum, ResultEnum } from 'src/logs/enums/action.enum';
+import { safeErrorExtraction } from 'src/utils/error-handler.utils';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -76,6 +77,7 @@ export class LoggingInterceptor implements NestInterceptor {
       }),
       catchError((error: unknown) => {
         const resultMessage = this.getResultFromError(error);
+        const errorData = safeErrorExtraction(error);
 
         try {
           void this.logsService.create({
@@ -87,6 +89,7 @@ export class LoggingInterceptor implements NestInterceptor {
             userId,
             actionDate,
             parameters,
+            errorData,
           });
         } catch (logError: unknown) {
           const message =

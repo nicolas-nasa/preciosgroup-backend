@@ -28,4 +28,20 @@ export enum ResultEnum {
   INTERNAL_SERVER_ERROR = 'Erro interno do servidor',
   TOKEN_EXPIRED = 'Token expirado',
   INVALID_TOKEN = 'Token inválido',
+  UNHANDLED_ERROR = 'Erro não tratado',
 }
+
+/**
+ * Tipos de erros que podem ser salvos em errorData dos logs
+ * Inclui: stack trace, tipo de erro, status HTTP, response completa, timestamp
+ */
+export interface LogErrorData {
+  type: string;
+  message: string;
+  stack?: string;
+  statusCode?: number;
+  response?: Record<string, unknown>;
+  timestamp: string;
+  [key: string]: unknown;
+}
+

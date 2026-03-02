@@ -9,6 +9,18 @@ import { Repository } from 'typeorm';
 import { LogEntity } from './logs.entity';
 import { FriendlyActionEnum } from './enums/action.enum';
 
+/**
+ * LogsService
+ * Serviço responsável por gerenciar logs da aplicação
+ * 
+ * Campos principais:
+ * - action: Ação realizada (POST, GET, PUT, DELETE, PATCH)
+ * - result: Resultado da ação (Sucesso, erro específico, etc.)
+ * - parameters: Parâmetros da requisição (query, body, route params)
+ * - errorData: Dados completos do erro (stack trace, tipo, mensagem detalhada) - Apenas quando há erro
+ * - userId: ID do usuário que realizou a ação
+ * - actionDate: Data/hora da ação
+ */
 @Injectable()
 export class LogsService {
   private readonly logger = new Logger(LogsService.name);
@@ -18,6 +30,11 @@ export class LogsService {
     private readonly logsRepository: Repository<LogEntity>,
   ) {}
 
+  /**
+   * Cria um novo registro de log
+   * @param createLogDto Dados do log a ser criado, incluindo errorData quando houver erro
+   * @returns LogEntity criado e salvo no banco de dados
+   */
   async create(createLogDto: Partial<LogEntity>): Promise<LogEntity> {
     try {
       if (!createLogDto.action) {

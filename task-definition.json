@@ -6,10 +6,11 @@
   ],
   "cpu": "256",
   "memory": "512",
+  "executionRoleArn": "arn:aws:iam::565069157475:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "precious-group-backend",
-      "image": "precious-group-backend:latest",
+      "image": "565069157475.dkr.ecr.us-east-1.amazonaws.com/precious-group-backend:latest",
       "essential": true,
       "portMappings": [
         {
@@ -33,6 +34,5 @@
         }
       }
     }
-  ],
-  "executionRoleArn": "arn:aws:iam::711022722666:role/ecsTaskExecutionRole"
+  ]
 }
