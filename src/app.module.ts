@@ -41,6 +41,7 @@ import { TypeOfProcessesModule } from './type-of-processes/type-of-processes.mod
       database: enviroments.DATABASE_DATABASE,
       autoLoadEntities: true,
       synchronize: configEnviroments.isProduction() ? false : true,
+      migrationsRun: configEnviroments.isProduction() ? true : false,
       migrations: [`${__dirname}/migrations/*{.ts,.js}`],
       migrationsTableName: 'migrations',
       ...(configEnviroments.isProduction() && {
