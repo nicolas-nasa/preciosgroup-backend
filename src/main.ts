@@ -15,7 +15,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: 'https://preciousgroup.ravt.com.br',
+    origin: 'https://preciousgroup.com.br',
     credentials: true,
     withCredentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
