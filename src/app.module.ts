@@ -43,6 +43,9 @@ import { TypeOfProcessesModule } from './type-of-processes/type-of-processes.mod
       synchronize: configEnviroments.isProduction() ? false : true,
       migrations: [`${__dirname}/migrations/*{.ts,.js}`],
       migrationsTableName: 'migrations',
+      ...(configEnviroments.isProduction() && {
+        ssl: { rejectUnauthorized: false },
+      }),
     }),
   ],
   controllers: [AppController],
